@@ -4,17 +4,23 @@ use serde::Deserialize;
 
 #[derive(Debug, Deserialize)]
 struct Record {
-    name: String,
+    // TODO enum
+    #[serde(rename = "type")]
+    tx_type: String,
+    client: u32,
+    tx: u32,
+    // TODO decimal
+    amount: f64,
 }
 
 fn parse_csv() -> Result<(), Box<dyn Error>> {
-    let mut rdr = csv::Reader::from_reader(io::stdin());
-    println!("before");
+    let mut rdr = csv::ReaderBuilder::new()
+        .trim(csv::Trim::All)
+        .from_reader(io::stdin());
     for result in rdr.deserialize() {
         let record: Record = result?;
-        println!("{}", record.name);
+        println!("{}", record.tx_type);
     }
-    println!("after");
     Ok(())
 }
 
