@@ -61,10 +61,10 @@ impl TryFrom<Record> for Transaction {
     }
 }
 
-pub fn parse_csv() -> Result<Vec<Transaction>, Box<dyn Error>> {
+pub fn parse_csv(reader: impl io::Read) -> Result<Vec<Transaction>, Box<dyn Error>> {
     let mut rdr = csv::ReaderBuilder::new()
         .trim(csv::Trim::All)
-        .from_reader(io::stdin());
+        .from_reader(reader);
     let mut transactions: Vec<Transaction> = Vec::new();
     for result in rdr.deserialize() {
         let record: Record = result?;
