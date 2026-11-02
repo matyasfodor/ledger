@@ -27,7 +27,7 @@ struct Record {
     client: u32,
     tx: u32,
     #[serde(deserialize_with = "deserialize_optional_amount")]
-    amount: Option<Amount>,
+    amount: Option<Amount<u32>>,
 }
 
 impl TryFrom<Record> for Transaction {

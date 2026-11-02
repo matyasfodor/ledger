@@ -5,12 +5,12 @@ pub enum Transaction {
     Deposit {
         client: u32,
         tx: u32,
-        amount: Amount,
+        amount: Amount<u32>,
     },
     Withdrawal {
         client: u32,
         tx: u32,
-        amount: Amount,
+        amount: Amount<u32>,
     },
     Chargeback {
         client: u32,

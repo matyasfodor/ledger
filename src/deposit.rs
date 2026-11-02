@@ -11,6 +11,6 @@ pub enum DepositState {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Deposit {
     pub client: u32,
-    pub amount: Amount,
+    pub amount: Amount<u32>,
     pub state: DepositState,
 }

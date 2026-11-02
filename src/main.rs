@@ -1,5 +1,5 @@
 use std::{
-    collections::HashMap,
+    collections::{HashMap, HashSet},
     env,
     error::Error,
     fs,
@@ -7,7 +7,7 @@ use std::{
     process,
 };
 
-use ledger::amount::format_amount;
+use ledger::amount::{Amount, format_amount};
 use ledger::balance::Balance;
 use ledger::deposit::{Deposit, DepositState};
 use ledger::parse::parse_csv;
@@ -19,10 +19,11 @@ fn calculate_balances(path: &str) -> Result<(), Box<dyn Error>> {
     let transactions = parse_csv(fs::File::open(path)?)?;
     let mut balances: HashMap<u32, Balance> = HashMap::new();
     let mut deposits_by_id: HashMap<u32, Deposit> = HashMap::new();
+    let mut accepted_tx: HashSet<u32> = HashSet::new();
     for record in transactions {
         let balance = balances.entry(record.client()).or_insert(Balance {
-            available: 0,
-            held: 0,
+            available: Amount::from_minor(0),
+            held: Amount::from_minor(0),
             locked: false,
         });
         if balance.locked {
@@ -30,6 +31,9 @@ fn calculate_balances(path: &str) -> Result<(), Box<dyn Error>> {
         }
         match record {
             Transaction::Deposit { client, tx, amount } => {
+                if !accepted_tx.insert(tx) {
+                    continue;
+                }
                 deposits_by_id.insert(
                     tx,
                     Deposit {
@@ -40,43 +44,45 @@ fn calculate_balances(path: &str) -> Result<(), Box<dyn Error>> {
                 );
                 balance.available += amount;
             }
-            Transaction::Withdrawal { amount, .. } => {
-                if balance.available >= amount {
-                    balance.available -= amount;
+            Transaction::Withdrawal { tx, amount, .. } => {
+                if accepted_tx.contains(&tx) || balance.available < amount {
+                    continue;
                 }
+                accepted_tx.insert(tx);
+                balance.available -= amount;
             }
-            // Handle chargeback, dispute, and resolve later
             Transaction::Dispute { client, tx } => {
                 let Some(deposit) = deposits_by_id.get_mut(&tx) else {
                     continue;
                 };
-                if deposit.state == DepositState::Posted && balance.available >= deposit.amount {
-                    deposit.state = DepositState::Disputed;
-                    balance.held += deposit.amount;
-                    balance.available -= deposit.amount;
-                    balance.locked = false;
+                if deposit.client != client || deposit.state != DepositState::Posted {
+                    continue;
                 }
+                deposit.state = DepositState::Disputed;
+                balance.held += deposit.amount;
+                balance.available -= deposit.amount;
             }
             Transaction::Chargeback { client, tx } => {
                 let Some(deposit) = deposits_by_id.get_mut(&tx) else {
                     continue;
                 };
-                if deposit.state == DepositState::Disputed {
-                    deposit.state = DepositState::ChargedBack;
-                    balance.held -= deposit.amount;
-                    balance.locked = true;
+                if deposit.client != client || deposit.state != DepositState::Disputed {
+                    continue;
                 }
+                deposit.state = DepositState::ChargedBack;
+                balance.held -= deposit.amount;
+                balance.locked = true;
             }
             Transaction::Resolve { client, tx } => {
                 let Some(deposit) = deposits_by_id.get_mut(&tx) else {
                     continue;
                 };
-                if deposit.state == DepositState::Disputed {
-                    deposit.state = DepositState::Posted;
-                    balance.held -= deposit.amount;
-                    balance.available += deposit.amount;
-                    balance.locked = false;
+                if deposit.client != client || deposit.state != DepositState::Disputed {
+                    continue;
                 }
+                deposit.state = DepositState::Posted;
+                balance.held -= deposit.amount;
+                balance.available += deposit.amount;
             }
         }
     }
