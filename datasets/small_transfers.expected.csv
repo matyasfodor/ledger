@@ -1,0 +1,4 @@
+client, available, held, total, locked
+1, 0.0000, 0.0000, 0.0000, false
+2, 0.7500, 0.0000, 0.7500, false
+3, 10.0001, 0.0000, 10.0001, false

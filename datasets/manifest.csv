@@ -1,0 +1,313 @@
+dataset,line,type,client,tx,amount,coherence,result,detail
+small_transfers.csv,2,deposit,1,1,1.0,coherent,accepted,opening deposit
+small_transfers.csv,3,deposit,2,2,2.0,coherent,accepted,opening deposit
+small_transfers.csv,4,deposit,1,3,2.0,coherent,accepted,second deposit
+small_transfers.csv,5,withdrawal,1,4,1.5,coherent,accepted,withdrawal within available funds
+small_transfers.csv,6,withdrawal,2,5,1.25,coherent,accepted,withdrawal within available funds
+small_transfers.csv,7,deposit,3,6,10.5,coherent,accepted,opening deposit
+small_transfers.csv,8,withdrawal,3,7,0.5,coherent,accepted,withdrawal within available funds
+small_transfers.csv,9,deposit,3,8,0.0001,coherent,accepted,smallest four-decimal deposit
+small_transfers.csv,10,withdrawal,1,9,1.5,coherent,accepted,withdraw the exact remaining balance
+large_transfers.csv,2,deposit,1,1,4.478,coherent,accepted,opening deposit
+large_transfers.csv,3,deposit,1,2,20.7751,coherent,accepted,additional deposit
+large_transfers.csv,4,deposit,1,3,34.0401,coherent,accepted,additional deposit
+large_transfers.csv,5,deposit,1,4,34.6038,coherent,accepted,additional deposit
+large_transfers.csv,6,deposit,2,5,7.3767,coherent,accepted,opening deposit
+large_transfers.csv,7,deposit,2,6,22.7389,coherent,accepted,additional deposit
+large_transfers.csv,8,deposit,3,7,35.0642,coherent,accepted,opening deposit
+large_transfers.csv,9,deposit,3,8,11.6407,coherent,accepted,additional deposit
+large_transfers.csv,10,deposit,4,9,28.0493,coherent,accepted,opening deposit
+large_transfers.csv,11,deposit,4,10,33.3436,coherent,accepted,additional deposit
+large_transfers.csv,12,deposit,4,11,25.4778,coherent,accepted,additional deposit
+large_transfers.csv,13,deposit,5,12,32.3754,coherent,accepted,opening deposit
+large_transfers.csv,14,deposit,5,13,10.7624,coherent,accepted,additional deposit
+large_transfers.csv,15,deposit,6,14,30.3206,coherent,accepted,opening deposit
+large_transfers.csv,16,deposit,6,15,22.363,coherent,accepted,additional deposit
+large_transfers.csv,17,deposit,6,16,30.6234,coherent,accepted,additional deposit
+large_transfers.csv,18,deposit,6,17,24.1993,coherent,accepted,additional deposit
+large_transfers.csv,19,deposit,7,18,17.9843,coherent,accepted,opening deposit
+large_transfers.csv,20,deposit,7,19,11.4469,coherent,accepted,additional deposit
+large_transfers.csv,21,deposit,7,20,29.6425,coherent,accepted,additional deposit
+large_transfers.csv,22,deposit,7,21,36.2036,coherent,accepted,additional deposit
+large_transfers.csv,23,deposit,8,22,3.8933,coherent,accepted,opening deposit
+large_transfers.csv,24,deposit,8,23,34.2071,coherent,accepted,additional deposit
+large_transfers.csv,25,deposit,8,24,5.5256,coherent,accepted,additional deposit
+large_transfers.csv,26,deposit,8,25,6.4118,coherent,accepted,additional deposit
+large_transfers.csv,27,deposit,9,26,4.8639,coherent,accepted,opening deposit
+large_transfers.csv,28,deposit,9,27,28.5947,coherent,accepted,additional deposit
+large_transfers.csv,29,deposit,9,28,36.9316,coherent,accepted,additional deposit
+large_transfers.csv,30,deposit,9,29,29.4436,coherent,accepted,additional deposit
+large_transfers.csv,31,deposit,10,30,2.0474,coherent,accepted,opening deposit
+large_transfers.csv,32,deposit,10,31,24.9111,coherent,accepted,additional deposit
+large_transfers.csv,33,deposit,4,32,1.2345,coherent,accepted,four-decimal deposit
+large_transfers.csv,34,withdrawal,1,33,93.897,coherent,accepted,withdraw the exact available balance
+large_transfers.csv,35,withdrawal,1,34,2.355,incoherent,insufficient available funds,withdrawal exceeds available funds
+large_transfers.csv,36,withdrawal,2,35,33.8333,incoherent,insufficient available funds,withdrawal exceeds available funds
+large_transfers.csv,37,withdrawal,3,36,50.2764,incoherent,insufficient available funds,withdrawal exceeds available funds
+large_transfers.csv,38,withdrawal,4,37,88.5626,incoherent,insufficient available funds,withdrawal exceeds available funds
+large_transfers.csv,39,withdrawal,5,38,45.954,incoherent,insufficient available funds,withdrawal exceeds available funds
+large_transfers.csv,40,withdrawal,6,39,111.6281,incoherent,insufficient available funds,withdrawal exceeds available funds
+large_transfers.csv,41,withdrawal,7,40,100.0026,incoherent,insufficient available funds,withdrawal exceeds available funds
+large_transfers.csv,42,withdrawal,8,41,55.0338,incoherent,insufficient available funds,withdrawal exceeds available funds
+large_transfers.csv,43,withdrawal,9,42,103.7685,incoherent,insufficient available funds,withdrawal exceeds available funds
+large_transfers.csv,44,withdrawal,10,43,27.741,incoherent,insufficient available funds,withdrawal exceeds available funds
+large_transfers.csv,45,withdrawal,4,44,83.0818,coherent,accepted,withdrawal within available funds
+large_transfers.csv,46,deposit,10,45,23.1996,coherent,accepted,deposit
+large_transfers.csv,47,withdrawal,10,46,22.8759,coherent,accepted,withdrawal within available funds
+large_transfers.csv,48,deposit,2,47,16.663,coherent,accepted,deposit
+large_transfers.csv,49,withdrawal,10,48,46.2162,incoherent,insufficient available funds,withdrawal exceeds available funds
+large_transfers.csv,50,deposit,5,49,3.1287,coherent,accepted,deposit
+large_transfers.csv,51,withdrawal,8,50,1.2094,coherent,accepted,withdrawal within available funds
+large_transfers.csv,52,deposit,8,51,17.6448,coherent,accepted,deposit
+large_transfers.csv,53,deposit,6,52,21.5171,coherent,accepted,deposit
+large_transfers.csv,54,deposit,7,53,2.2902,coherent,accepted,deposit
+large_transfers.csv,55,deposit,4,54,23.6895,coherent,accepted,deposit
+large_transfers.csv,56,deposit,5,55,7.0225,coherent,accepted,deposit
+large_transfers.csv,57,deposit,5,56,6.8763,coherent,accepted,deposit
+large_transfers.csv,58,withdrawal,3,57,53.4308,incoherent,insufficient available funds,withdrawal exceeds available funds
+large_transfers.csv,59,withdrawal,8,58,52.1514,coherent,accepted,withdrawal within available funds
+large_transfers.csv,60,withdrawal,2,59,49.1881,incoherent,insufficient available funds,withdrawal exceeds available funds
+large_transfers.csv,61,withdrawal,2,60,43.8252,coherent,accepted,withdrawal within available funds
+large_transfers.csv,62,deposit,4,61,8.7717,coherent,accepted,deposit
+large_transfers.csv,63,deposit,3,62,11.5771,coherent,accepted,deposit
+large_transfers.csv,64,deposit,7,63,8.7046,coherent,accepted,deposit
+large_transfers.csv,65,deposit,3,64,19.1651,coherent,accepted,deposit
+large_transfers.csv,66,withdrawal,7,65,98.6365,coherent,accepted,withdrawal within available funds
+large_transfers.csv,67,withdrawal,10,66,18.3104,coherent,accepted,withdrawal within available funds
+large_transfers.csv,68,withdrawal,7,67,20.336,incoherent,insufficient available funds,withdrawal exceeds available funds
+large_transfers.csv,69,withdrawal,8,68,0.9734,coherent,accepted,withdrawal within available funds
+large_transfers.csv,70,deposit,9,69,10.4978,coherent,accepted,deposit
+large_transfers.csv,71,deposit,2,70,0.4345,coherent,accepted,deposit
+large_transfers.csv,72,withdrawal,8,71,5.1391,coherent,accepted,withdrawal within available funds
+large_transfers.csv,73,deposit,5,72,17.3628,coherent,accepted,deposit
+large_transfers.csv,74,deposit,7,73,24.6618,coherent,accepted,deposit
+large_transfers.csv,75,withdrawal,7,74,1.2723,coherent,accepted,withdrawal within available funds
+large_transfers.csv,76,withdrawal,2,75,22.0754,incoherent,insufficient available funds,withdrawal exceeds available funds
+large_transfers.csv,77,withdrawal,1,76,16.247,incoherent,insufficient available funds,withdrawal exceeds available funds
+large_transfers.csv,78,withdrawal,6,77,93.9147,coherent,accepted,withdrawal within available funds
+large_transfers.csv,79,withdrawal,6,78,42.1534,incoherent,insufficient available funds,withdrawal exceeds available funds
+large_transfers.csv,80,withdrawal,7,79,17.7549,coherent,accepted,withdrawal within available funds
+large_transfers.csv,81,deposit,8,80,11.2871,coherent,accepted,deposit
+large_transfers.csv,82,withdrawal,9,81,128.5597,incoherent,insufficient available funds,withdrawal exceeds available funds
+large_transfers.csv,83,deposit,4,82,24.3789,coherent,accepted,deposit
+large_transfers.csv,84,withdrawal,10,83,6.7834,coherent,accepted,withdrawal within available funds
+large_transfers.csv,85,deposit,5,84,16.7705,coherent,accepted,deposit
+large_transfers.csv,86,deposit,5,85,2.8549,coherent,accepted,deposit
+large_transfers.csv,87,withdrawal,5,86,113.8335,incoherent,insufficient available funds,withdrawal exceeds available funds
+large_transfers.csv,88,withdrawal,6,87,53.9513,incoherent,insufficient available funds,withdrawal exceeds available funds
+large_transfers.csv,89,deposit,4,88,4.7176,coherent,accepted,deposit
+large_transfers.csv,90,withdrawal,1,89,19.5721,incoherent,insufficient available funds,withdrawal exceeds available funds
+large_transfers.csv,91,deposit,6,90,12.1428,coherent,accepted,deposit
+large_transfers.csv,92,withdrawal,6,91,66.1987,incoherent,insufficient available funds,withdrawal exceeds available funds
+large_transfers.csv,93,deposit,10,92,22.7075,coherent,accepted,deposit
+large_transfers.csv,94,deposit,7,93,21.4563,coherent,accepted,deposit
+large_transfers.csv,95,withdrawal,1,94,7.408,incoherent,insufficient available funds,withdrawal exceeds available funds
+large_transfers.csv,96,withdrawal,3,95,15.22,coherent,accepted,withdrawal within available funds
+large_transfers.csv,97,withdrawal,9,96,126.3677,incoherent,insufficient available funds,withdrawal exceeds available funds
+large_transfers.csv,98,withdrawal,6,97,57.0773,incoherent,insufficient available funds,withdrawal exceeds available funds
+large_transfers.csv,99,deposit,8,98,24.9971,coherent,accepted,deposit
+large_transfers.csv,100,withdrawal,5,99,46.6518,coherent,accepted,withdrawal within available funds
+large_transfers.csv,101,deposit,10,100,10.4721,coherent,accepted,deposit
+large_transfers.csv,102,deposit,7,101,18.4365,coherent,accepted,deposit
+large_transfers.csv,103,withdrawal,7,102,60.6477,incoherent,insufficient available funds,withdrawal exceeds available funds
+large_transfers.csv,104,deposit,4,103,14.5873,coherent,accepted,deposit
+large_transfers.csv,105,withdrawal,2,104,2.8069,coherent,accepted,withdrawal within available funds
+large_transfers.csv,106,deposit,3,105,10.6991,coherent,accepted,deposit
+large_transfers.csv,107,withdrawal,10,106,44.064,incoherent,insufficient available funds,withdrawal exceeds available funds
+large_transfers.csv,108,withdrawal,3,107,91.469,incoherent,insufficient available funds,withdrawal exceeds available funds
+large_transfers.csv,109,withdrawal,6,108,63.9477,incoherent,insufficient available funds,withdrawal exceeds available funds
+large_transfers.csv,110,withdrawal,5,109,65.5784,incoherent,insufficient available funds,withdrawal exceeds available funds
+large_transfers.csv,111,deposit,7,110,18.4831,coherent,accepted,deposit
+large_transfers.csv,112,deposit,4,111,18.7736,coherent,accepted,deposit
+large_transfers.csv,113,deposit,9,112,6.1764,coherent,accepted,deposit
+large_transfers.csv,114,withdrawal,9,113,70.8215,coherent,accepted,withdrawal within available funds
+large_transfers.csv,115,withdrawal,10,114,17.29,coherent,accepted,withdrawal within available funds
+large_transfers.csv,116,withdrawal,4,115,105.6055,incoherent,insufficient available funds,withdrawal exceeds available funds
+large_transfers.csv,117,deposit,10,116,2.454,coherent,accepted,deposit
+large_transfers.csv,118,deposit,4,117,11.6246,coherent,accepted,deposit
+large_transfers.csv,119,deposit,4,118,17.9419,coherent,accepted,deposit
+large_transfers.csv,120,withdrawal,6,119,65.3735,incoherent,insufficient available funds,withdrawal exceeds available funds
+large_transfers.csv,121,withdrawal,2,120,0.0504,coherent,accepted,withdrawal within available funds
+large_transfers.csv,122,withdrawal,8,121,19.7593,coherent,accepted,withdrawal within available funds
+large_transfers.csv,123,deposit,7,122,13.8906,coherent,accepted,deposit
+large_transfers.csv,124,deposit,3,123,1.1156,coherent,accepted,deposit
+small_disputes.csv,2,deposit,1,1,10.0,coherent,accepted,opening deposit
+small_disputes.csv,3,deposit,1,2,5.0,coherent,accepted,second deposit
+small_disputes.csv,4,dispute,1,1,,coherent,accepted,dispute an accepted deposit
+small_disputes.csv,5,resolve,1,1,,coherent,accepted,release a disputed deposit
+small_disputes.csv,6,withdrawal,1,3,4.0,coherent,accepted,withdrawal after the dispute was resolved
+small_disputes.csv,7,deposit,2,4,8.0,coherent,accepted,opening deposit
+small_disputes.csv,8,deposit,2,5,2.0,coherent,accepted,second deposit
+small_disputes.csv,9,dispute,2,4,,coherent,accepted,dispute an accepted deposit
+small_disputes.csv,10,chargeback,2,4,,coherent,accepted,charge back a disputed deposit and lock the account
+small_disputes.csv,11,deposit,3,6,3.2515,coherent,accepted,four-decimal deposit
+small_disputes.csv,12,dispute,3,6,,coherent,accepted,dispute the full deposit
+small_disputes.csv,13,resolve,3,6,,coherent,accepted,release a disputed deposit
+small_disputes.csv,14,deposit,4,7,1.0,coherent,accepted,opening deposit
+small_disputes.csv,15,deposit,4,8,1.0,coherent,accepted,second deposit stays available while the first is held
+small_disputes.csv,16,dispute,4,7,,coherent,accepted,hold one deposit
+small_disputes.csv,17,withdrawal,4,9,1.0,coherent,accepted,withdraw only the funds that are still available
+small_disputes.csv,18,resolve,4,7,,coherent,accepted,release the held deposit
+small_disputes.csv,19,deposit,5,10,6.0,coherent,accepted,opening deposit
+small_disputes.csv,20,deposit,5,11,1.5,coherent,accepted,second deposit
+small_disputes.csv,21,withdrawal,5,12,1.5,coherent,accepted,withdraw the undisputed deposit
+small_disputes.csv,22,dispute,5,10,,coherent,accepted,leave this dispute open so held funds are non-zero
+large_disputes.csv,2,deposit,1,1,22.4698,coherent,accepted,opening deposit
+large_disputes.csv,3,deposit,1,2,6.5543,coherent,accepted,opening deposit
+large_disputes.csv,4,deposit,1,3,23.0536,coherent,accepted,opening deposit
+large_disputes.csv,5,deposit,2,4,6.1315,coherent,accepted,opening deposit
+large_disputes.csv,6,deposit,2,5,14.4938,coherent,accepted,opening deposit
+large_disputes.csv,7,deposit,2,6,28.2,coherent,accepted,opening deposit
+large_disputes.csv,8,deposit,3,7,25.9189,coherent,accepted,opening deposit
+large_disputes.csv,9,deposit,3,8,2.4906,coherent,accepted,opening deposit
+large_disputes.csv,10,deposit,3,9,9.3843,coherent,accepted,opening deposit
+large_disputes.csv,11,deposit,4,10,3.6815,coherent,accepted,opening deposit
+large_disputes.csv,12,deposit,4,11,18.3196,coherent,accepted,opening deposit
+large_disputes.csv,13,deposit,4,12,18.2415,coherent,accepted,opening deposit
+large_disputes.csv,14,deposit,5,13,12.1288,coherent,accepted,opening deposit
+large_disputes.csv,15,deposit,5,14,12.788,coherent,accepted,opening deposit
+large_disputes.csv,16,deposit,5,15,20.7102,coherent,accepted,opening deposit
+large_disputes.csv,17,deposit,6,16,24.6325,coherent,accepted,opening deposit
+large_disputes.csv,18,deposit,6,17,11.3481,coherent,accepted,opening deposit
+large_disputes.csv,19,deposit,6,18,11.8679,coherent,accepted,opening deposit
+large_disputes.csv,20,deposit,7,19,27.4057,coherent,accepted,opening deposit
+large_disputes.csv,21,deposit,7,20,3.7018,coherent,accepted,opening deposit
+large_disputes.csv,22,deposit,7,21,6.5815,coherent,accepted,opening deposit
+large_disputes.csv,23,deposit,8,22,13.6993,coherent,accepted,opening deposit
+large_disputes.csv,24,deposit,8,23,27.2341,coherent,accepted,opening deposit
+large_disputes.csv,25,deposit,8,24,9.5125,coherent,accepted,opening deposit
+large_disputes.csv,26,deposit,8,25,16.6788,coherent,accepted,deposit
+large_disputes.csv,27,deposit,4,26,5.8311,coherent,accepted,deposit
+large_disputes.csv,28,dispute,7,19,,coherent,accepted,dispute an accepted deposit
+large_disputes.csv,29,resolve,7,19,,coherent,accepted,release a disputed deposit
+large_disputes.csv,30,dispute,6,17,,coherent,accepted,dispute an accepted deposit
+large_disputes.csv,31,deposit,5,27,1.0441,coherent,accepted,deposit
+large_disputes.csv,32,deposit,1,28,6.6026,coherent,accepted,deposit
+large_disputes.csv,33,withdrawal,2,29,13.0363,coherent,accepted,withdrawal within available funds
+large_disputes.csv,34,withdrawal,8,30,45.4135,coherent,accepted,withdrawal within available funds
+large_disputes.csv,35,resolve,6,17,,coherent,accepted,release a disputed deposit
+large_disputes.csv,36,dispute,3,7,,coherent,accepted,dispute an accepted deposit
+large_disputes.csv,37,deposit,6,31,3.2171,coherent,accepted,deposit
+large_disputes.csv,38,withdrawal,1,32,41.967,coherent,accepted,withdrawal within available funds
+large_disputes.csv,39,dispute,5,14,,coherent,accepted,dispute an accepted deposit
+large_disputes.csv,40,withdrawal,6,33,15.0264,coherent,accepted,withdrawal within available funds
+large_disputes.csv,41,withdrawal,4,34,4.6231,coherent,accepted,withdrawal within available funds
+large_disputes.csv,42,chargeback,3,7,,coherent,accepted,charge back one disputed deposit and lock the account
+large_disputes.csv,43,deposit,7,35,18.4616,coherent,accepted,deposit
+large_disputes.csv,44,deposit,8,36,16.9205,coherent,accepted,deposit
+large_disputes.csv,45,deposit,6,37,17.9074,coherent,accepted,deposit
+large_disputes.csv,46,withdrawal,7,38,55.369,coherent,accepted,withdrawal within available funds
+large_disputes.csv,47,withdrawal,6,39,39.5695,coherent,accepted,withdrawal within available funds
+large_disputes.csv,48,deposit,6,40,1.0322,coherent,accepted,deposit
+large_disputes.csv,49,withdrawal,7,41,0.3537,coherent,accepted,withdrawal within available funds
+large_disputes.csv,50,withdrawal,6,42,3.6385,coherent,accepted,withdrawal within available funds
+large_disputes.csv,51,deposit,2,43,12.4955,coherent,accepted,deposit
+large_disputes.csv,52,withdrawal,2,44,27.4583,coherent,accepted,withdrawal within available funds
+large_disputes.csv,53,dispute,2,4,,coherent,accepted,dispute an accepted deposit
+large_disputes.csv,54,withdrawal,6,45,10.2062,coherent,accepted,withdrawal within available funds
+large_disputes.csv,55,withdrawal,6,46,0.7415,coherent,accepted,withdrawal within available funds
+large_disputes.csv,56,deposit,5,47,2.7396,coherent,accepted,deposit
+large_disputes.csv,57,dispute,7,19,,coherent,accepted,dispute an accepted deposit
+large_disputes.csv,58,withdrawal,8,48,26.945,coherent,accepted,withdrawal within available funds
+large_disputes.csv,59,withdrawal,5,49,34.4681,coherent,accepted,withdrawal within available funds
+large_disputes.csv,60,withdrawal,8,50,6.2761,coherent,accepted,withdrawal within available funds
+large_disputes.csv,61,dispute,8,36,,coherent,accepted,dispute an accepted deposit
+large_disputes.csv,62,deposit,2,51,11.1604,coherent,accepted,deposit
+large_disputes.csv,63,withdrawal,4,52,22.9077,coherent,accepted,withdrawal within available funds
+large_disputes.csv,64,withdrawal,2,53,25.2672,coherent,accepted,withdrawal within available funds
+large_disputes.csv,65,dispute,2,6,,coherent,accepted,dispute an accepted deposit
+large_disputes.csv,66,resolve,2,6,,coherent,accepted,release a disputed deposit
+large_disputes.csv,67,dispute,2,6,,coherent,accepted,dispute an accepted deposit
+large_disputes.csv,68,resolve,5,14,,coherent,accepted,release a disputed deposit
+large_disputes.csv,69,deposit,6,54,7.6401,coherent,accepted,deposit
+large_disputes.csv,70,resolve,2,4,,coherent,accepted,release a disputed deposit
+large_disputes.csv,71,chargeback,2,6,,coherent,accepted,charge back one disputed deposit and lock the account
+large_disputes.csv,72,withdrawal,1,55,7.8406,coherent,accepted,withdrawal within available funds
+large_disputes.csv,73,dispute,6,40,,coherent,accepted,dispute an accepted deposit
+large_disputes.csv,74,resolve,8,36,,coherent,accepted,release a disputed deposit
+large_disputes.csv,75,withdrawal,6,56,3.3088,coherent,accepted,withdrawal within available funds
+large_disputes.csv,76,deposit,7,57,15.5761,coherent,accepted,deposit
+large_disputes.csv,77,withdrawal,4,58,11.4586,coherent,accepted,withdrawal within available funds
+large_disputes.csv,78,withdrawal,8,59,1.759,coherent,accepted,withdrawal within available funds
+large_disputes.csv,79,dispute,1,28,,coherent,accepted,dispute an accepted deposit
+large_disputes.csv,80,withdrawal,4,60,5.1716,coherent,accepted,withdrawal within available funds
+large_disputes.csv,81,withdrawal,4,61,1.356,coherent,accepted,withdrawal within available funds
+large_disputes.csv,82,deposit,7,62,6.2412,coherent,accepted,deposit
+large_disputes.csv,83,dispute,6,31,,coherent,accepted,dispute an accepted deposit
+large_disputes.csv,84,deposit,7,63,13.7193,coherent,accepted,deposit
+large_disputes.csv,85,dispute,4,12,,coherent,accepted,dispute an accepted deposit
+large_disputes.csv,86,dispute,1,2,,coherent,accepted,dispute an accepted deposit
+large_disputes.csv,87,deposit,6,64,17.428,coherent,accepted,deposit
+large_disputes.csv,88,withdrawal,5,65,3.9472,coherent,accepted,withdrawal within available funds
+large_disputes.csv,89,deposit,7,66,13.2968,coherent,accepted,deposit
+large_disputes.csv,90,dispute,6,64,,coherent,accepted,dispute an accepted deposit
+large_disputes.csv,91,dispute,4,11,,coherent,accepted,dispute an accepted deposit
+large_disputes.csv,92,deposit,1,67,15.4186,coherent,accepted,deposit
+large_disputes.csv,93,dispute,5,47,,coherent,accepted,dispute an accepted deposit
+large_disputes.csv,94,dispute,1,1,,coherent,accepted,dispute an accepted deposit
+large_disputes.csv,95,deposit,5,68,17.9395,coherent,accepted,deposit
+large_disputes.csv,96,dispute,1,67,,coherent,accepted,dispute an accepted deposit
+large_disputes.csv,97,deposit,5,69,15.8791,coherent,accepted,deposit
+large_disputes.csv,98,withdrawal,8,70,1.7351,coherent,accepted,withdrawal within available funds
+large_disputes.csv,99,deposit,6,71,13.7006,coherent,accepted,deposit
+large_disputes.csv,100,dispute,1,3,,coherent,accepted,dispute an accepted deposit
+large_disputes.csv,101,resolve,1,67,,coherent,accepted,release a disputed deposit
+large_disputes.csv,102,withdrawal,7,72,14.6945,coherent,accepted,withdrawal within available funds
+large_disputes.csv,103,deposit,5,73,3.9899,coherent,accepted,deposit
+large_disputes.csv,104,deposit,6,74,8.7353,coherent,accepted,deposit
+large_disputes.csv,105,withdrawal,8,75,0.3276,coherent,accepted,withdrawal within available funds
+large_disputes.csv,106,resolve,6,64,,coherent,accepted,release a disputed deposit
+large_disputes.csv,107,deposit,1,76,14.31,coherent,accepted,deposit
+large_disputes.csv,108,withdrawal,6,77,27.4741,coherent,accepted,withdrawal within available funds
+large_disputes.csv,109,deposit,5,78,2.5043,coherent,accepted,deposit
+large_disputes.csv,110,deposit,1,79,2.0061,coherent,accepted,deposit while funds are held
+large_disputes.csv,111,deposit,4,80,2.5353,coherent,accepted,deposit
+large_disputes.csv,112,dispute,8,23,,coherent,accepted,dispute an accepted deposit
+large_disputes.csv,113,deposit,5,81,4.2842,coherent,accepted,deposit
+large_disputes.csv,114,deposit,8,82,7.192,coherent,accepted,deposit while funds are held
+large_disputes.csv,115,withdrawal,6,83,0.5518,coherent,accepted,withdrawal within available funds
+large_disputes.csv,116,deposit,9,84,20.0,coherent,accepted,deposit later charged back
+large_disputes.csv,117,deposit,9,85,5.0,coherent,accepted,deposit that remains available
+large_disputes.csv,118,withdrawal,9,86,100.0,incoherent,insufficient available funds,withdrawal exceeds available funds
+large_disputes.csv,119,dispute,9,84,,coherent,accepted,dispute the larger deposit
+large_disputes.csv,120,chargeback,9,84,,coherent,accepted,chargeback locks the account
+large_disputes.csv,121,deposit,9,87,3.0,incoherent,account is locked,deposit after the account was locked
+large_disputes.csv,122,withdrawal,9,88,1.0,incoherent,account is locked,withdrawal after the account was locked
+large_disputes.csv,123,deposit,10,89,8.0,coherent,accepted,deposit that will be disputed after a withdrawal
+large_disputes.csv,124,withdrawal,10,90,3.0,coherent,accepted,spend part of the deposit before it is disputed
+large_disputes.csv,125,dispute,10,89,,coherent,accepted,dispute a deposit already partly withdrawn; available becomes negative and total stays the same
+large_disputes.csv,126,deposit,11,91,12.0,coherent,accepted,deposit used for repeated dispute lifecycle events
+large_disputes.csv,127,deposit,11,92,3.0,coherent,accepted,deposit resolved once
+large_disputes.csv,128,withdrawal,11,93,1.0,coherent,accepted,withdrawal within available funds
+large_disputes.csv,129,dispute,11,91,,coherent,accepted,first dispute
+large_disputes.csv,130,dispute,11,91,,incoherent,transaction is already under dispute,dispute a deposit that is already under dispute
+large_disputes.csv,131,resolve,11,91,,coherent,accepted,resolve the dispute
+large_disputes.csv,132,resolve,11,91,,incoherent,transaction is not under dispute,resolve a deposit that is no longer under dispute
+large_disputes.csv,133,chargeback,11,91,,incoherent,transaction is not under dispute,chargeback a deposit that is no longer under dispute
+large_disputes.csv,134,dispute,11,92,,coherent,accepted,dispute the second deposit
+large_disputes.csv,135,resolve,11,92,,coherent,accepted,resolve the second deposit
+large_disputes.csv,136,withdrawal,11,94,14.5,incoherent,insufficient available funds,withdrawal exceeds available funds
+large_disputes.csv,137,deposit,12,95,7.5,coherent,accepted,deposit referenced by partner errors
+large_disputes.csv,138,deposit,12,96,2.5,coherent,accepted,undisputed deposit
+large_disputes.csv,139,withdrawal,12,97,2.0,coherent,accepted,"accepted withdrawal, later targeted by a dispute"
+large_disputes.csv,140,withdrawal,12,98,50.0,incoherent,insufficient available funds,withdrawal exceeds available funds and is not recorded
+large_disputes.csv,141,dispute,12,97,,incoherent,only deposits can be disputed,dispute a withdrawal
+large_disputes.csv,142,dispute,12,98,,incoherent,referenced transaction does not exist,dispute the id of a withdrawal that was never accepted
+large_disputes.csv,143,dispute,12,9000001,,incoherent,referenced transaction does not exist,dispute an unknown transaction id
+large_disputes.csv,144,dispute,1,95,,incoherent,referenced transaction belongs to another client,dispute names a different client than the deposit
+large_disputes.csv,145,resolve,12,96,,incoherent,transaction is not under dispute,resolve a deposit that was never disputed
+large_disputes.csv,146,chargeback,12,96,,incoherent,transaction is not under dispute,chargeback a deposit that was never disputed
+large_disputes.csv,147,resolve,12,9000002,,incoherent,referenced transaction does not exist,resolve an unknown transaction id
+large_disputes.csv,148,chargeback,12,9000003,,incoherent,referenced transaction does not exist,chargeback an unknown transaction id
+large_disputes.csv,149,deposit,12,95,99.0,incoherent,duplicate transaction id,deposit reuses an existing transaction id
+large_disputes.csv,150,dispute,12,95,,coherent,accepted,valid dispute left open
+large_disputes.csv,151,deposit,13,99,5.0,coherent,accepted,deposit spent before chargeback
+large_disputes.csv,152,withdrawal,13,100,4.0,coherent,accepted,withdraw most of the deposit
+large_disputes.csv,153,dispute,13,99,,coherent,accepted,dispute the spent deposit; available becomes negative
+large_disputes.csv,154,chargeback,13,99,,coherent,accepted,chargeback removes the held amount from total and leaves available unchanged
+large_disputes.csv,155,deposit,14,101,10.0,coherent,accepted,first of two disputed deposits
+large_disputes.csv,156,deposit,14,102,6.0,coherent,accepted,second of two disputed deposits
+large_disputes.csv,157,dispute,14,101,,coherent,accepted,dispute the first deposit
+large_disputes.csv,158,dispute,14,102,,coherent,accepted,dispute the second deposit
+large_disputes.csv,159,resolve,14,101,,coherent,accepted,release the first dispute
+large_disputes.csv,160,chargeback,14,102,,coherent,accepted,charge back the remaining dispute and lock the account
