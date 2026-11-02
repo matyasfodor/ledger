@@ -1,7 +1,7 @@
 use std::fmt;
 
-use serde::de::{self, Deserializer, Visitor};
 use serde::Deserialize;
+use serde::de::{self, Deserializer, Visitor};
 
 /// Minor units of `1/10_000`. `1.5000` is stored as `15_000`.
 pub type Amount = u64;
@@ -136,7 +136,9 @@ mod tests {
         assert_eq!(
             rows,
             vec![
-                Row { amount: Some(15_000) },
+                Row {
+                    amount: Some(15_000)
+                },
                 Row { amount: None },
                 Row { amount: Some(1) },
             ]
