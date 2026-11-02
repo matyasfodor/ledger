@@ -1,16 +1,31 @@
 use std::{error::Error, io, process};
 
+use ledger::amount::{deserialize_optional_amount, Amount};
 use serde::Deserialize;
 
 #[derive(Debug, Deserialize)]
+#[serde(rename_all = "lowercase")]
+enum TxType {
+    #[serde(rename = "deposit")]
+    Deposit,
+    #[serde(rename = "withdrawal")]
+    Withdrawal,
+    #[serde(rename = "chargeback")]
+    Chargeback,
+    #[serde(rename = "dispute")]
+    Dispute,
+    #[serde(rename = "resolve")]
+    Resolve,
+}
+
+#[derive(Debug, Deserialize)]
 struct Record {
-    // TODO enum
     #[serde(rename = "type")]
-    tx_type: String,
+    tx_type: TxType,
     client: u32,
     tx: u32,
-    // TODO decimal
-    amount: f64,
+    #[serde(deserialize_with = "deserialize_optional_amount")]
+    amount: Option<Amount>,
 }
 
 fn parse_csv() -> Result<(), Box<dyn Error>> {
@@ -19,7 +34,7 @@ fn parse_csv() -> Result<(), Box<dyn Error>> {
         .from_reader(io::stdin());
     for result in rdr.deserialize() {
         let record: Record = result?;
-        println!("{}", record.tx_type);
+        println!("{:?}", record.tx_type);
     }
     Ok(())
 }
