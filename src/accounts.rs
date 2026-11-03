@@ -3,7 +3,7 @@ use std::io::{self, Write};
 
 use crate::amount::{PositiveAmount, format_amount};
 use crate::balance::Balance;
-use crate::deposit::{AccountTransaction, DepositState};
+use crate::account_transaction::{AccountTransaction, DepositState};
 use crate::id::{ClientId, TxId};
 use crate::parse::parse_csv;
 use crate::transaction::Transaction;
