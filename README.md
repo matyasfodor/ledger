@@ -16,7 +16,7 @@ client, available, held, total, locked
 2, 2.0000, 0.0000, 2.0000, false
 ```
 
-Stdout is only that report. A row that cannot be parsed or applied is skipped, and the rest of the file is processed. `RUST_LOG=debug` prints each skip on stderr with the reason, client, transaction id, amount, and balance. A missing file, or a failure to write the report, still exits with an error.
+Stdout is only that report. A row that cannot be parsed or applied is skipped, and the rest of the file is processed. `RUST_LOG=debug` prints each skip on stderr with the reason, client, transaction id, amount, and balance. A missing file, or a failure to write the report, is logged at error on stderr and the process exits with an error.
 
 ```sh
 cargo test
@@ -78,9 +78,11 @@ The brief says to document a choice when a requirement can be read more than one
 
 **Zero amounts.** The brief describes a decimal with up to four places. It does not say what a zero or a negative amount means. A zero deposit or withdrawal is ignored. It does not reserve the transaction id. A negative amount is a bad row and is skipped with the rest of the malformed input.
 
-**How big a number can get.** The brief fixes four decimal places, a `u16` client id, and a `u32` transaction id. It does not cap the whole part of an amount, and it does not say what to do when a sum overflows. One transaction is stored as a non-negative `u32` in units of `1/10_000`, so the ceiling for a single amount is `429_496.7295`. Available and held are `i64`: a dispute can push available below zero, and held is the sum of disputed deposits. An addition or subtraction that would overflow, or that would make held negative, skips that row. Values are not wrapped.
+**A blank amount is not a missing column.** Dispute, resolve, and chargeback do not state an amount. The column is still present and left blank (`dispute, 1, 1,`). Any value in it is ignored, and the transaction id is the reference. A row that drops the column (`dispute, 1, 1`) has fewer fields than the header. That row is a broken record and is skipped. Later rows are still applied.
 
-**A bad row does not stop the process.** The brief says to ignore some business cases, such as a withdrawal without the funds or a dispute of an unknown transaction. It does not say what a malformed row should do to the process, or what an overflow or a subtraction that would push held below zero should do. I treat this as a core piece of a service that cannot afford to crash. Invalid input, overflow, and that negative-held case skip the row. The rest of the file is still applied, and the report is still written. Each skip is logged at debug on stderr, with the reason, client, transaction id, amount, and balance, so the row can be inspected downstream. `RUST_LOG=debug` turns that log on. A missing input file, or a failure to write the report, is still fatal: there is no ledger to report.
+**How big a number can get.** The brief fixes four decimal places, a `u16` client id, and a `u32` transaction id. It does not cap the whole part of an amount, and it does not say what to do when a sum overflows. One transaction is stored as a non-negative `u32` in units of `1/10_000`, so the ceiling for a single amount is `429_496.7295`. Available and held are `i64`: a dispute can push available below zero, and held is the sum of disputed deposits. An addition or subtraction that would overflow, or that would make held negative, skips that row. Values are not wrapped. The printed total is available plus held, summed in 128 bits, so two `i64` balances whose sum does not fit in `i64` are still written.
+
+**A bad row does not stop the process.** The brief says to ignore some business cases, such as a withdrawal without the funds or a dispute of an unknown transaction. It does not say what a malformed row should do to the process, or what an overflow or a subtraction that would push held below zero should do. I treat this as a core piece of a service that cannot afford to crash. Invalid input, overflow, and that negative-held case skip the row. The rest of the file is still applied, and the report is still written. Each skip is logged at debug on stderr, with the reason, client, transaction id, amount, and balance, so the row can be inspected downstream. `RUST_LOG=debug` turns that log on. A missing input file, or a failure to write the report, is logged at error and the process exits. There is no ledger to report.
 
 ## Parallelism
 

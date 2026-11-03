@@ -118,6 +118,15 @@ pub fn format_amount(amount: impl Formattable) -> String {
     amount.write_amount()
 }
 
+/// `available + held` for the report. The sum of two `i64` minor units always fits in `i128`.
+pub fn format_total(available: SignedAmount, held: SignedAmount) -> String {
+    let total = i128::from(available.minor) + i128::from(held.minor);
+    let negative = total < 0;
+    let abs = total.unsigned_abs();
+    let scale = u128::from(SCALE);
+    write_parts(negative, (abs / scale) as u64, (abs % scale) as u32)
+}
+
 impl From<PositiveAmount> for SignedAmount {
     fn from(amount: PositiveAmount) -> Self {
         Self {
@@ -278,6 +287,17 @@ mod tests {
         for input in ["", "1.23456", "1.2.3", "-1.0", "+1.0", ".5", "1.2a", " 1.0"] {
             assert!(parse_amount(input).is_err(), "{input}");
         }
+    }
+
+    #[test]
+    fn formats_a_total_that_does_not_fit_in_i64() {
+        let available = signed(i64::MAX);
+        let held = signed(1);
+        assert_eq!(format_total(available, held), "922337203685477.5808");
+        assert_eq!(
+            format_total(signed(i64::MIN), signed(i64::MIN)),
+            "-1844674407370955.1616"
+        );
     }
 
     #[test]

@@ -7,20 +7,20 @@ fn main() {
     let mut args = env::args();
     args.next();
     let Some(path) = args.next() else {
-        eprintln!("usage: ledger <transactions.csv>");
+        log::error!("usage: ledger <transactions.csv>");
         process::exit(1);
     };
     let input = match fs::File::open(&path) {
         Ok(input) => input,
         Err(err) => {
-            eprintln!("error running example: {err}");
+            log::error!("failed to open {path}: {err}");
             process::exit(1);
         }
     };
     let stdout = io::stdout();
     let mut output = stdout.lock();
     if let Err(err) = process(input, &mut output) {
-        eprintln!("error running example: {err}");
+        log::error!("failed to write the report: {err}");
         process::exit(1);
     }
 }

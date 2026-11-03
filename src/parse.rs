@@ -225,6 +225,31 @@ deposit, 1, 7, 2.0
     }
 
     #[test]
+    fn dispute_without_an_amount_column_is_skipped_and_a_later_row_applies() {
+        let csv = "\
+type, client, tx, amount
+deposit, 1, 1, 10.0
+dispute, 1, 1
+deposit, 1, 2, 1.0
+";
+        let mut accounts = Accounts::new();
+        let mut skipped = Vec::new();
+        for row in parse_csv(csv.as_bytes()) {
+            match row {
+                Ok(row) => accounts.apply(&row.transaction).unwrap(),
+                Err(failure) => skipped.push(failure),
+            }
+        }
+        assert_eq!(skipped.len(), 1);
+        assert!(matches!(skipped[0].skip, Skip::BrokenRecord { .. }));
+        assert_eq!(
+            format_amount(accounts.balance(1).unwrap().available),
+            "11.0000"
+        );
+        assert_eq!(format_amount(accounts.balance(1).unwrap().held), "0.0000");
+    }
+
+    #[test]
     fn dispute_with_an_amount_keeps_the_reference_only() {
         let mut parsed = rows(
             "\

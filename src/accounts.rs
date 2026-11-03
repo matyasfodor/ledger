@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::io::{self, Write};
 
 use crate::account_transaction::{AccountTransaction, DepositState};
-use crate::amount::{PositiveAmount, SignedAmount, format_amount};
+use crate::amount::{PositiveAmount, SignedAmount, format_amount, format_total};
 use crate::balance::Balance;
 use crate::id::{ClientId, TxId};
 use crate::parse::parse_csv;
@@ -252,7 +252,7 @@ pub fn write_balances(out: &mut impl Write, accounts: &Accounts) -> io::Result<(
             client,
             format_amount(balance.available),
             format_amount(balance.held),
-            format_amount(balance.available + balance.held),
+            format_total(balance.available, balance.held),
             balance.locked,
         )?;
     }
@@ -591,6 +591,23 @@ mod tests {
                 ..
             })
         ));
+    }
+
+    #[test]
+    fn writes_a_total_larger_than_i64() {
+        let mut accounts = apply_all(vec![deposit(1, 1, "1.0")]);
+        let balance = accounts.balances.get_mut(&1).unwrap();
+        balance.available = SignedAmount::from_minor(i64::MAX);
+        balance.held = SignedAmount::from_minor(1);
+        let mut output = Vec::new();
+        write_balances(&mut output, &accounts).unwrap();
+        assert_eq!(
+            String::from_utf8(output).unwrap(),
+            "\
+client, available, held, total, locked
+1, 922337203685477.5807, 0.0001, 922337203685477.5808, false
+"
+        );
     }
 
     #[test]
