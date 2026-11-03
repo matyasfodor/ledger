@@ -17,10 +17,26 @@ impl<T> Amount<T> {
     }
 }
 
+impl Amount<u32> {
+    pub(crate) fn is_zero(self) -> bool {
+        self.minor == 0
+    }
+}
+
 impl Amount<i64> {
+    pub(crate) fn is_negative(self) -> bool {
+        self.minor < 0
+    }
+
     pub(crate) fn checked_add_positive(self, rhs: Amount<u32>) -> Option<Self> {
         self.minor
             .checked_add(i64::from(rhs.minor))
+            .map(Self::from_minor)
+    }
+
+    pub(crate) fn checked_sub_positive(self, rhs: Amount<u32>) -> Option<Self> {
+        self.minor
+            .checked_sub(i64::from(rhs.minor))
             .map(Self::from_minor)
     }
 }
