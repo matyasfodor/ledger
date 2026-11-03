@@ -5,10 +5,10 @@ A payments engine. It reads a transaction CSV and writes one balance row per cli
 ## Run
 
 ```sh
-cargo run -- input.csv
+cargo run -- transactions.csv
 ```
 
-`input.csv` is a small demo. Client 2's withdrawal is larger than the available balance, so it is ignored:
+`transactions.csv` is a small demo. Client 2's withdrawal is larger than the available balance, so it is ignored:
 
 ```text
 client, available, held, total, locked
@@ -26,7 +26,7 @@ cargo test
 
 `cargo test` is how the handled cases are checked. It runs two layers.
 
-Sample data is in the repo. `datasets/` holds `small_transfers`, `large_transfers`, `small_disputes`, and `large_disputes`, each with a matching `.expected.csv`. `tests/check_output.rs` runs the `ledger` binary on every input and compares stdout with that file. Both sides are sorted by client id. The brief says report order does not matter, and the writer sorts the same way so the files stay easy to diff. `input.csv` is a separate hand-written demo, not one of those fixtures.
+Sample data is in the repo. `datasets/` holds `small_transfers`, `large_transfers`, `small_disputes`, and `large_disputes`, each with a matching `.expected.csv`. `tests/check_output.rs` runs the `ledger` binary on every input and compares stdout with that file. Both sides are sorted by client id. The brief says report order does not matter, and the writer sorts the same way so the files stay easy to diff. `transactions.csv` is a separate hand-written demo, not one of those fixtures.
 
 Unit tests sit next to the code they cover.
 
