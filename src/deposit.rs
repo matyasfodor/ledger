@@ -7,10 +7,14 @@ pub enum DepositState {
     ChargedBack,
 }
 
-/// A posted deposit kept so a later dispute can find its amount and client.
+/// An accepted deposit or withdrawal. A withdrawal has no dispute state; it is
+/// kept so a later row cannot reuse its transaction id.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct Deposit {
-    pub client: u32,
-    pub amount: Amount<u32>,
-    pub state: DepositState,
+pub enum AccountTransaction {
+    Deposit {
+        client: u32,
+        amount: Amount<u32>,
+        state: DepositState,
+    },
+    Withdrawal,
 }
