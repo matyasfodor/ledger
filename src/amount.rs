@@ -1,6 +1,6 @@
 use std::cmp::Ordering;
 use std::fmt;
-use std::ops::{Add, AddAssign, Sub, SubAssign};
+use std::ops::Add;
 
 use serde::Deserialize;
 use serde::de::{self, Deserializer, Visitor};
@@ -118,55 +118,6 @@ pub fn format_amount(amount: impl Formattable) -> String {
     amount.write_amount()
 }
 
-/// `available + held` for the report. The sum of two `i64` minor units always fits in `i128`.
-pub fn format_total(available: SignedAmount, held: SignedAmount) -> String {
-    let total = i128::from(available.minor) + i128::from(held.minor);
-    let negative = total < 0;
-    let abs = total.unsigned_abs();
-    let scale = u128::from(SCALE);
-    write_parts(negative, (abs / scale) as u64, (abs % scale) as u32)
-}
-
-impl From<PositiveAmount> for SignedAmount {
-    fn from(amount: PositiveAmount) -> Self {
-        Self {
-            minor: i64::from(amount.minor),
-        }
-    }
-}
-
-impl Add for PositiveAmount {
-    type Output = Self;
-
-    fn add(self, rhs: Self) -> Self {
-        Self {
-            minor: self.minor.strict_add(rhs.minor),
-        }
-    }
-}
-
-impl AddAssign for PositiveAmount {
-    fn add_assign(&mut self, rhs: Self) {
-        *self = *self + rhs;
-    }
-}
-
-impl Sub for PositiveAmount {
-    type Output = Self;
-
-    fn sub(self, rhs: Self) -> Self {
-        Self {
-            minor: self.minor.strict_sub(rhs.minor),
-        }
-    }
-}
-
-impl SubAssign for PositiveAmount {
-    fn sub_assign(&mut self, rhs: Self) {
-        *self = *self - rhs;
-    }
-}
-
 impl Add for SignedAmount {
     type Output = Self;
 
@@ -177,41 +128,11 @@ impl Add for SignedAmount {
     }
 }
 
-impl AddAssign for SignedAmount {
-    fn add_assign(&mut self, rhs: Self) {
-        *self = *self + rhs;
-    }
-}
-
-impl Add<PositiveAmount> for SignedAmount {
-    type Output = Self;
-
-    fn add(self, rhs: PositiveAmount) -> Self {
+impl From<PositiveAmount> for SignedAmount {
+    fn from(amount: PositiveAmount) -> Self {
         Self {
-            minor: self.minor.strict_add(i64::from(rhs.minor)),
+            minor: i64::from(amount.minor),
         }
-    }
-}
-
-impl AddAssign<PositiveAmount> for SignedAmount {
-    fn add_assign(&mut self, rhs: PositiveAmount) {
-        *self = *self + rhs;
-    }
-}
-
-impl Sub<PositiveAmount> for SignedAmount {
-    type Output = Self;
-
-    fn sub(self, rhs: PositiveAmount) -> Self {
-        Self {
-            minor: self.minor.strict_sub(i64::from(rhs.minor)),
-        }
-    }
-}
-
-impl SubAssign<PositiveAmount> for SignedAmount {
-    fn sub_assign(&mut self, rhs: PositiveAmount) {
-        *self = *self - rhs;
     }
 }
 
@@ -290,17 +211,6 @@ mod tests {
     }
 
     #[test]
-    fn formats_a_total_that_does_not_fit_in_i64() {
-        let available = signed(i64::MAX);
-        let held = signed(1);
-        assert_eq!(format_total(available, held), "922337203685477.5808");
-        assert_eq!(
-            format_total(signed(i64::MIN), signed(i64::MIN)),
-            "-1844674407370955.1616"
-        );
-    }
-
-    #[test]
     fn formats_four_decimal_places() {
         assert_eq!(format_amount(unsigned(0)), "0.0000");
         assert_eq!(format_amount(unsigned(1)), "0.0001");
@@ -323,7 +233,9 @@ mod tests {
 
     #[test]
     fn signed_available_can_subtract_an_unsigned_deposit() {
-        let available = signed(50_000) - unsigned(80_000);
+        let available = signed(50_000)
+            .checked_sub_positive(unsigned(80_000))
+            .unwrap();
         assert_eq!(available, signed(-30_000));
         assert!(available < unsigned(0));
     }

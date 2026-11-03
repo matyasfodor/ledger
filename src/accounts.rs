@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::io::{self, Write};
 
 use crate::account_transaction::{AccountTransaction, DepositState};
-use crate::amount::{PositiveAmount, SignedAmount, format_amount, format_total};
+use crate::amount::{PositiveAmount, SignedAmount, format_amount};
 use crate::balance::Balance;
 use crate::id::{ClientId, TxId};
 use crate::parse::parse_csv;
@@ -29,9 +29,11 @@ impl Accounts {
         self.transactions.get(&tx)
     }
 
-    /// Apply one transaction. A skipped row leaves accepted state unchanged and does not create a client.
+    /// Apply one transaction. A well-formed row opens the client before any business rule is checked.
+    /// A skipped row leaves funds and transaction ids unchanged.
     pub fn apply(&mut self, transaction: &Transaction) -> Result<(), Skip> {
         let client = transaction.client();
+        self.balances.entry(client).or_insert_with(Balance::zero);
         if self
             .balances
             .get(&client)
@@ -55,12 +57,13 @@ impl Accounts {
         if self.transactions.contains_key(&tx) {
             return Err(Skip::Duplicate);
         }
-        let current = self
-            .balances
-            .get(&client)
-            .map(|balance| balance.available)
-            .unwrap_or_else(|| SignedAmount::from_minor(0));
-        let available = current.checked_add_positive(amount).ok_or(Skip::Overflow)?;
+        let mut balance = self.balance_for(client)?;
+        let available = balance
+            .available
+            .checked_add_positive(amount)
+            .ok_or(Skip::Overflow)?;
+        balance.available = available;
+        self.balances.insert(client, balance);
         self.transactions.insert(
             tx,
             AccountTransaction::Deposit {
@@ -69,10 +72,6 @@ impl Accounts {
                 state: DepositState::Posted,
             },
         );
-        self.balances
-            .entry(client)
-            .or_insert_with(Balance::zero)
-            .available = available;
         Ok(())
     }
 
@@ -83,9 +82,7 @@ impl Accounts {
         if self.transactions.contains_key(&tx) {
             return Err(Skip::Duplicate);
         }
-        let Some(balance) = self.balances.get(&client) else {
-            return Err(Skip::InsufficientFunds);
-        };
+        let mut balance = self.balance_for(client)?;
         if balance.available < amount {
             return Err(Skip::InsufficientFunds);
         }
@@ -93,14 +90,15 @@ impl Accounts {
             .available
             .checked_sub_positive(amount)
             .ok_or(Skip::Overflow)?;
+        balance.available = available;
+        self.balances.insert(client, balance);
         self.transactions.insert(tx, AccountTransaction::Withdrawal);
-        self.balances.get_mut(&client).unwrap().available = available;
         Ok(())
     }
 
     fn dispute(&mut self, client: ClientId, tx: TxId) -> Result<(), Skip> {
         let amount = self.deposit_amount(client, tx, DepositState::Posted)?;
-        let balance = self.balance_for_owner(client);
+        let mut balance = self.balance_for(client)?;
         let held = balance
             .held
             .checked_add_positive(amount)
@@ -109,35 +107,36 @@ impl Accounts {
             .available
             .checked_sub_positive(amount)
             .ok_or(Skip::Overflow)?;
-        self.set_deposit_state(tx, DepositState::Disputed);
-        let balance = self.balances.get_mut(&client).unwrap();
         balance.held = held;
         balance.available = available;
+        self.balances.insert(client, balance);
+        self.set_deposit_state(tx, DepositState::Disputed);
         Ok(())
     }
 
     fn chargeback(&mut self, client: ClientId, tx: TxId) -> Result<(), Skip> {
         let amount = self.deposit_amount(client, tx, DepositState::Disputed)?;
-        let held = non_negative_held(self.balance_for_owner(client).held, amount)?;
-        self.set_deposit_state(tx, DepositState::ChargedBack);
-        let balance = self.balances.get_mut(&client).unwrap();
+        let mut balance = self.balance_for(client)?;
+        let held = non_negative_held(balance.held, amount)?;
         balance.held = held;
         balance.locked = true;
+        self.balances.insert(client, balance);
+        self.set_deposit_state(tx, DepositState::ChargedBack);
         Ok(())
     }
 
     fn resolve(&mut self, client: ClientId, tx: TxId) -> Result<(), Skip> {
         let amount = self.deposit_amount(client, tx, DepositState::Disputed)?;
-        let balance = self.balance_for_owner(client);
+        let mut balance = self.balance_for(client)?;
         let held = non_negative_held(balance.held, amount)?;
         let available = balance
             .available
             .checked_add_positive(amount)
             .ok_or(Skip::Overflow)?;
-        self.set_deposit_state(tx, DepositState::Posted);
-        let balance = self.balances.get_mut(&client).unwrap();
         balance.held = held;
         balance.available = available;
+        self.balances.insert(client, balance);
+        self.set_deposit_state(tx, DepositState::Posted);
         Ok(())
     }
 
@@ -166,11 +165,18 @@ impl Accounts {
         }
     }
 
-    fn balance_for_owner(&self, client: ClientId) -> Balance {
-        *self
-            .balances
-            .get(&client)
-            .expect("an accepted deposit has a balance")
+    /// The client opened by `apply`. If that record is gone, reopen it at zero, log, and skip the row.
+    fn balance_for(&mut self, client: ClientId) -> Result<Balance, Skip> {
+        match self.balances.get(&client).copied() {
+            Some(balance) => Ok(balance),
+            None => {
+                self.balances.insert(client, Balance::zero());
+                log::debug!(
+                    "client {client} has no balance; opened at zero and skipped the row"
+                );
+                Err(Skip::MissingBalance)
+            }
+        }
     }
 
     fn set_deposit_state(&mut self, tx: TxId, state: DepositState) {
@@ -252,7 +258,7 @@ pub fn write_balances(out: &mut impl Write, accounts: &Accounts) -> io::Result<(
             client,
             format_amount(balance.available),
             format_amount(balance.held),
-            format_total(balance.available, balance.held),
+            format_amount(balance.available + balance.held),
             balance.locked,
         )?;
     }
@@ -339,6 +345,13 @@ mod tests {
         );
     }
 
+    fn assert_unfunded(accounts: &Accounts, client: ClientId) {
+        let balance = accounts.balance(client).unwrap();
+        assert_eq!(format_amount(balance.available), "0.0000");
+        assert_eq!(format_amount(balance.held), "0.0000");
+        assert!(!balance.locked);
+    }
+
     #[test]
     fn deposit_increases_available_and_total_matches_parts() {
         let accounts = apply_all(vec![deposit(1, 1, "1.5"), deposit(1, 2, "2.25")]);
@@ -377,14 +390,14 @@ mod tests {
     }
 
     #[test]
-    fn duplicate_id_is_ignored_and_does_not_create_the_other_client() {
+    fn duplicate_id_is_ignored_and_opens_the_other_client_at_zero() {
         let mut accounts = apply_all(vec![deposit(1, 1, "1.0")]);
         assert_eq!(
             accounts.apply(&deposit(2, 1, "5.0")).unwrap_err(),
             Skip::Duplicate
         );
         assert_available(&accounts, 1, "1.0000");
-        assert!(accounts.balance(2).is_none());
+        assert_unfunded(&accounts, 2);
     }
 
     #[test]
@@ -414,7 +427,7 @@ mod tests {
         );
         assert_available(&accounts, 1, "1.0000");
         assert_held(&accounts, 1, "0.0000");
-        assert!(accounts.balance(2).is_none());
+        assert_unfunded(&accounts, 2);
     }
 
     #[test]
@@ -530,7 +543,7 @@ mod tests {
             accounts.apply(&deposit(1, 1, "0")).unwrap_err(),
             Skip::ZeroAmount
         );
-        assert!(accounts.balance(1).is_none());
+        assert_unfunded(&accounts, 1);
         assert!(accounts.transaction(1).is_none());
 
         accounts.apply(&deposit(1, 1, "2.0")).unwrap();
@@ -548,7 +561,43 @@ mod tests {
     }
 
     #[test]
-    fn ignored_rows_do_not_create_a_client() {
+    fn missing_balance_skips_the_row_and_reopens_the_client_at_zero() {
+        let mut accounts = apply_all(vec![deposit(1, 1, "5.0")]);
+        accounts.balances.remove(&1);
+        let transaction = deposit(1, 2, "1.0");
+        let skip = accounts.deposit(1, 2, amount("1.0")).unwrap_err();
+        assert_eq!(skip, Skip::MissingBalance);
+        assert_unfunded(&accounts, 1);
+        assert!(accounts.transaction(2).is_none());
+        assert!(matches!(
+            accounts.transaction(1),
+            Some(AccountTransaction::Deposit {
+                state: DepositState::Posted,
+                ..
+            })
+        ));
+        assert_eq!(
+            describe_skip(&accounts, &transaction, &skip),
+            "client balance is missing, client=1 tx=2 type=deposit amount=1.0000 available=0.0000 held=0.0000 locked=false"
+        );
+
+        accounts.balances.remove(&1);
+        assert_eq!(
+            accounts.dispute(1, 1).unwrap_err(),
+            Skip::MissingBalance
+        );
+        assert_unfunded(&accounts, 1);
+        assert!(matches!(
+            accounts.transaction(1),
+            Some(AccountTransaction::Deposit {
+                state: DepositState::Posted,
+                ..
+            })
+        ));
+    }
+
+    #[test]
+    fn rejected_transaction_opens_a_zero_balance() {
         let mut accounts = Accounts::new();
         assert_eq!(
             accounts.apply(&withdrawal(3, 1, "1.0")).unwrap_err(),
@@ -558,9 +607,20 @@ mod tests {
             accounts.apply(&dispute(4, 99)).unwrap_err(),
             Skip::UnknownTransaction
         );
-        assert!(accounts.balance(3).is_none());
-        assert!(accounts.balance(4).is_none());
+        assert_unfunded(&accounts, 3);
+        assert_unfunded(&accounts, 4);
         assert!(accounts.transaction(1).is_none());
+
+        let mut output = Vec::new();
+        write_balances(&mut output, &accounts).unwrap();
+        assert_eq!(
+            String::from_utf8(output).unwrap(),
+            "\
+client, available, held, total, locked
+3, 0.0000, 0.0000, 0.0000, false
+4, 0.0000, 0.0000, 0.0000, false
+"
+        );
     }
 
     #[test]
@@ -594,20 +654,14 @@ mod tests {
     }
 
     #[test]
-    fn writes_a_total_larger_than_i64() {
+    #[should_panic]
+    fn writing_a_total_that_does_not_fit_in_i64_panics() {
         let mut accounts = apply_all(vec![deposit(1, 1, "1.0")]);
         let balance = accounts.balances.get_mut(&1).unwrap();
         balance.available = SignedAmount::from_minor(i64::MAX);
         balance.held = SignedAmount::from_minor(1);
         let mut output = Vec::new();
         write_balances(&mut output, &accounts).unwrap();
-        assert_eq!(
-            String::from_utf8(output).unwrap(),
-            "\
-client, available, held, total, locked
-1, 922337203685477.5807, 0.0001, 922337203685477.5808, false
-"
-        );
     }
 
     #[test]

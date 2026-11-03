@@ -21,6 +21,7 @@ pub enum Skip {
     ZeroAmount,
     Overflow,
     NegativeHeld,
+    MissingBalance,
 }
 
 /// A skipped row together with its 1-based line in the input file.
@@ -53,6 +54,7 @@ impl fmt::Display for Skip {
             Skip::ZeroAmount => write!(f, "amount must be positive"),
             Skip::Overflow => write!(f, "amount overflow"),
             Skip::NegativeHeld => write!(f, "held funds would become negative"),
+            Skip::MissingBalance => write!(f, "client balance is missing"),
         }
     }
 }
