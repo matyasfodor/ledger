@@ -16,10 +16,10 @@ use ledger::transaction::Transaction;
 fn calculate_balances(path: &str) -> Result<(), Box<dyn Error>> {
     let mut out = io::stdout().lock();
     writeln!(out, "client, available, held, total, locked")?;
-    let transactions = parse_csv(fs::File::open(path)?)?;
     let mut balances: HashMap<u32, Balance> = HashMap::new();
     let mut transactions_by_id: HashMap<u32, AccountTransaction> = HashMap::new();
-    for record in transactions {
+    for record in parse_csv(fs::File::open(path)?) {
+        let record = record?;
         let balance = balances.entry(record.client()).or_insert(Balance {
             available: Amount::from_minor(0),
             held: Amount::from_minor(0),

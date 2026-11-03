@@ -61,14 +61,15 @@ impl TryFrom<Record> for Transaction {
     }
 }
 
-pub fn parse_csv(reader: impl io::Read) -> Result<Vec<Transaction>, Box<dyn Error>> {
-    let mut rdr = csv::ReaderBuilder::new()
+pub fn parse_csv(
+    reader: impl io::Read,
+) -> impl Iterator<Item = Result<Transaction, Box<dyn Error>>> {
+    csv::ReaderBuilder::new()
         .trim(csv::Trim::All)
-        .from_reader(reader);
-    let mut transactions: Vec<Transaction> = Vec::new();
-    for result in rdr.deserialize() {
-        let record: Record = result?;
-        transactions.push(record.try_into()?);
-    }
-    Ok(transactions)
+        .from_reader(reader)
+        .into_deserialize::<Record>()
+        .map(|result| {
+            let record: Record = result?;
+            record.try_into()
+        })
 }
