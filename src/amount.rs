@@ -17,10 +17,19 @@ impl<T> Amount<T> {
     }
 }
 
-/// A transaction amount or held funds. Non-negative, up to `429_496.7295`.
+impl Amount<i64> {
+    pub(crate) fn checked_add_positive(self, rhs: Amount<u32>) -> Option<Self> {
+        self.minor
+            .checked_add(i64::from(rhs.minor))
+            .map(Self::from_minor)
+    }
+}
+
+/// A transaction amount. Non-negative, up to `429_496.7295`.
 pub type PositiveAmount = Amount<u32>;
 
-/// Available funds. Signed because a dispute can push the balance below zero.
+/// Available or held funds. Signed because a dispute can push available below zero,
+/// and held is a sum of deposits.
 pub type SignedAmount = Amount<i64>;
 
 const SCALE: u32 = 10_000;
@@ -106,7 +115,7 @@ impl Add for PositiveAmount {
 
     fn add(self, rhs: Self) -> Self {
         Self {
-            minor: self.minor + rhs.minor,
+            minor: self.minor.strict_add(rhs.minor),
         }
     }
 }
@@ -122,7 +131,7 @@ impl Sub for PositiveAmount {
 
     fn sub(self, rhs: Self) -> Self {
         Self {
-            minor: self.minor - rhs.minor,
+            minor: self.minor.strict_sub(rhs.minor),
         }
     }
 }
@@ -133,12 +142,28 @@ impl SubAssign for PositiveAmount {
     }
 }
 
+impl Add for SignedAmount {
+    type Output = Self;
+
+    fn add(self, rhs: Self) -> Self {
+        Self {
+            minor: self.minor.strict_add(rhs.minor),
+        }
+    }
+}
+
+impl AddAssign for SignedAmount {
+    fn add_assign(&mut self, rhs: Self) {
+        *self = *self + rhs;
+    }
+}
+
 impl Add<PositiveAmount> for SignedAmount {
     type Output = Self;
 
     fn add(self, rhs: PositiveAmount) -> Self {
         Self {
-            minor: self.minor + i64::from(rhs.minor),
+            minor: self.minor.strict_add(i64::from(rhs.minor)),
         }
     }
 }
@@ -154,7 +179,7 @@ impl Sub<PositiveAmount> for SignedAmount {
 
     fn sub(self, rhs: PositiveAmount) -> Self {
         Self {
-            minor: self.minor - i64::from(rhs.minor),
+            minor: self.minor.strict_sub(i64::from(rhs.minor)),
         }
     }
 }
@@ -247,6 +272,17 @@ mod tests {
         assert_eq!(format_amount(unsigned(32_515)), "3.2515");
         assert_eq!(format_amount(signed(-40_000)), "-4.0000");
         assert_eq!(format_amount(signed(-35_000)), "-3.5000");
+    }
+
+    #[test]
+    fn checked_add_rejects_signed_overflow() {
+        let max = signed(i64::MAX);
+        assert!(max.checked_add_positive(unsigned(1)).is_none());
+        let near = signed(i64::MAX - 10);
+        assert_eq!(
+            near.checked_add_positive(unsigned(10)).unwrap(),
+            signed(i64::MAX)
+        );
     }
 
     #[test]
