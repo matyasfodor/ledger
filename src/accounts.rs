@@ -30,7 +30,7 @@ impl Accounts {
     }
 
     /// Apply one transaction. A skipped row leaves accepted state unchanged and does not create a client.
-    pub fn apply(&mut self, transaction: Transaction) -> Result<(), Skip> {
+    pub fn apply(&mut self, transaction: &Transaction) -> Result<(), Skip> {
         let client = transaction.client();
         if self
             .balances
@@ -40,11 +40,11 @@ impl Accounts {
             return Err(Skip::Locked);
         }
         match transaction {
-            Transaction::Deposit { tx, amount, .. } => self.deposit(client, tx, amount),
-            Transaction::Withdrawal { tx, amount, .. } => self.withdraw(client, tx, amount),
-            Transaction::Dispute { tx, .. } => self.dispute(client, tx),
-            Transaction::Chargeback { tx, .. } => self.chargeback(client, tx),
-            Transaction::Resolve { tx, .. } => self.resolve(client, tx),
+            Transaction::Deposit { tx, amount, .. } => self.deposit(client, *tx, *amount),
+            Transaction::Withdrawal { tx, amount, .. } => self.withdraw(client, *tx, *amount),
+            Transaction::Dispute { tx, .. } => self.dispute(client, *tx),
+            Transaction::Chargeback { tx, .. } => self.chargeback(client, *tx),
+            Transaction::Resolve { tx, .. } => self.resolve(client, *tx),
         }
     }
 
@@ -191,6 +191,47 @@ fn non_negative_held(held: SignedAmount, amount: PositiveAmount) -> Result<Signe
     }
 }
 
+fn describe_skip(accounts: &Accounts, transaction: &Transaction, skip: &Skip) -> String {
+    let mut fields = vec![
+        format!("client={}", transaction.client()),
+        format!("tx={}", transaction.tx()),
+        format!("type={}", transaction.kind()),
+    ];
+    if let Some(amount) = transaction.amount() {
+        fields.push(format!("amount={}", format_amount(amount)));
+    }
+    match accounts.balance(transaction.client()) {
+        Some(balance) => {
+            fields.push(format!("available={}", format_amount(balance.available)));
+            fields.push(format!("held={}", format_amount(balance.held)));
+            fields.push(format!("locked={}", balance.locked));
+        }
+        None => fields.push("no account".to_string()),
+    }
+    match accounts.transaction(transaction.tx()) {
+        Some(AccountTransaction::Deposit {
+            client: owner,
+            amount,
+            state,
+        }) => {
+            fields.push(format!("owner={owner}"));
+            fields.push(format!("deposit={}", format_amount(*amount)));
+            fields.push(format!("state={}", deposit_state_name(*state)));
+        }
+        Some(AccountTransaction::Withdrawal) => fields.push("stored=withdrawal".to_string()),
+        None => {}
+    }
+    format!("{skip}, {}", fields.join(" "))
+}
+
+fn deposit_state_name(state: DepositState) -> &'static str {
+    match state {
+        DepositState::Posted => "posted",
+        DepositState::Disputed => "disputed",
+        DepositState::ChargedBack => "charged_back",
+    }
+}
+
 fn state_skip(expected: DepositState, actual: DepositState) -> Skip {
     match (expected, actual) {
         (DepositState::Posted, DepositState::Disputed) => Skip::AlreadyDisputed,
@@ -223,8 +264,12 @@ pub fn process(input: impl io::Read, output: &mut impl Write) -> io::Result<()> 
     for row in parse_csv(input) {
         match row {
             Ok(row) => {
-                if let Err(skip) = accounts.apply(row.transaction) {
-                    log::debug!("line {}: {skip}", row.line);
+                if let Err(skip) = accounts.apply(&row.transaction) {
+                    log::debug!(
+                        "line {}: {}",
+                        row.line,
+                        describe_skip(&accounts, &row.transaction, &skip)
+                    );
                 }
             }
             Err(failure) => log::debug!("{failure}"),
@@ -274,7 +319,7 @@ mod tests {
         let mut accounts = Accounts::new();
         for transaction in transactions {
             accounts
-                .apply(transaction)
+                .apply(&transaction)
                 .expect("this row is an accepted transaction");
         }
         accounts
@@ -313,18 +358,29 @@ mod tests {
             Some(AccountTransaction::Withdrawal)
         ));
 
-        let rejected = accounts.apply(withdrawal(1, 3, "0.0001")).unwrap_err();
+        let rejected = accounts.apply(&withdrawal(1, 3, "0.0001")).unwrap_err();
         assert_eq!(rejected, Skip::InsufficientFunds);
         assert!(accounts.transaction(3).is_none());
-        accounts.apply(deposit(1, 3, "4.0")).unwrap();
+        accounts.apply(&deposit(1, 3, "4.0")).unwrap();
         assert_available(&accounts, 1, "4.0000");
+    }
+
+    #[test]
+    fn skipped_withdrawal_log_names_the_client_transaction_amount_and_balance() {
+        let mut accounts = apply_all(vec![deposit(2, 2, "2.0")]);
+        let transaction = withdrawal(2, 5, "3.0");
+        let skip = accounts.apply(&transaction).unwrap_err();
+        assert_eq!(
+            describe_skip(&accounts, &transaction, &skip),
+            "insufficient available funds, client=2 tx=5 type=withdrawal amount=3.0000 available=2.0000 held=0.0000 locked=false"
+        );
     }
 
     #[test]
     fn duplicate_id_is_ignored_and_does_not_create_the_other_client() {
         let mut accounts = apply_all(vec![deposit(1, 1, "1.0")]);
         assert_eq!(
-            accounts.apply(deposit(2, 1, "5.0")).unwrap_err(),
+            accounts.apply(&deposit(2, 1, "5.0")).unwrap_err(),
             Skip::Duplicate
         );
         assert_available(&accounts, 1, "1.0000");
@@ -334,7 +390,7 @@ mod tests {
     #[test]
     fn dispute_moves_funds_to_held_even_when_available_becomes_negative() {
         let mut accounts = apply_all(vec![deposit(1, 1, "5.0"), withdrawal(1, 2, "1.0")]);
-        accounts.apply(dispute(1, 1)).unwrap();
+        accounts.apply(&dispute(1, 1)).unwrap();
         let balance = accounts.balance(1).unwrap();
         assert_available(&accounts, 1, "-1.0000");
         assert_held(&accounts, 1, "5.0000");
@@ -345,15 +401,15 @@ mod tests {
     fn dispute_of_a_withdrawal_unknown_id_or_other_client_is_ignored() {
         let mut accounts = apply_all(vec![deposit(1, 1, "2.0"), withdrawal(1, 2, "1.0")]);
         assert_eq!(
-            accounts.apply(dispute(1, 2)).unwrap_err(),
+            accounts.apply(&dispute(1, 2)).unwrap_err(),
             Skip::NotADeposit
         );
         assert_eq!(
-            accounts.apply(dispute(1, 9)).unwrap_err(),
+            accounts.apply(&dispute(1, 9)).unwrap_err(),
             Skip::UnknownTransaction
         );
         assert_eq!(
-            accounts.apply(dispute(2, 1)).unwrap_err(),
+            accounts.apply(&dispute(2, 1)).unwrap_err(),
             Skip::WrongClient
         );
         assert_available(&accounts, 1, "1.0000");
@@ -364,18 +420,18 @@ mod tests {
     #[test]
     fn resolve_and_chargeback_apply_only_while_disputed() {
         let mut accounts = apply_all(vec![deposit(1, 1, "4.0")]);
-        accounts.apply(dispute(1, 1)).unwrap();
+        accounts.apply(&dispute(1, 1)).unwrap();
         assert_eq!(
-            accounts.apply(dispute(1, 1)).unwrap_err(),
+            accounts.apply(&dispute(1, 1)).unwrap_err(),
             Skip::AlreadyDisputed
         );
-        assert_eq!(accounts.apply(resolve(1, 1)).unwrap(), ());
+        assert_eq!(accounts.apply(&resolve(1, 1)).unwrap(), ());
         assert_eq!(
-            accounts.apply(resolve(1, 1)).unwrap_err(),
+            accounts.apply(&resolve(1, 1)).unwrap_err(),
             Skip::NotDisputed
         );
         assert_eq!(
-            accounts.apply(chargeback(1, 1)).unwrap_err(),
+            accounts.apply(&chargeback(1, 1)).unwrap_err(),
             Skip::NotDisputed
         );
         assert_available(&accounts, 1, "4.0000");
@@ -386,9 +442,9 @@ mod tests {
     #[test]
     fn resolved_deposit_can_be_disputed_again() {
         let mut accounts = apply_all(vec![deposit(1, 1, "3.0")]);
-        accounts.apply(dispute(1, 1)).unwrap();
-        accounts.apply(resolve(1, 1)).unwrap();
-        accounts.apply(dispute(1, 1)).unwrap();
+        accounts.apply(&dispute(1, 1)).unwrap();
+        accounts.apply(&resolve(1, 1)).unwrap();
+        accounts.apply(&dispute(1, 1)).unwrap();
         assert_available(&accounts, 1, "0.0000");
         assert_held(&accounts, 1, "3.0000");
     }
@@ -396,10 +452,10 @@ mod tests {
     #[test]
     fn chargeback_locks_and_leaves_another_dispute_held() {
         let mut accounts = apply_all(vec![deposit(1, 1, "10.0"), deposit(1, 2, "6.0")]);
-        accounts.apply(withdrawal(1, 3, "1.0")).unwrap();
-        accounts.apply(dispute(1, 1)).unwrap();
-        accounts.apply(dispute(1, 2)).unwrap();
-        accounts.apply(chargeback(1, 2)).unwrap();
+        accounts.apply(&withdrawal(1, 3, "1.0")).unwrap();
+        accounts.apply(&dispute(1, 1)).unwrap();
+        accounts.apply(&dispute(1, 2)).unwrap();
+        accounts.apply(&chargeback(1, 2)).unwrap();
         let balance = accounts.balance(1).unwrap();
         assert_available(&accounts, 1, "-1.0000");
         assert_held(&accounts, 1, "10.0000");
@@ -421,23 +477,23 @@ mod tests {
             deposit(1, 2, "3.0"),
             deposit(2, 3, "4.0"),
         ]);
-        accounts.apply(dispute(1, 1)).unwrap();
-        accounts.apply(chargeback(1, 1)).unwrap();
+        accounts.apply(&dispute(1, 1)).unwrap();
+        accounts.apply(&chargeback(1, 1)).unwrap();
         let before = *accounts.balance(1).unwrap();
 
         assert_eq!(
-            accounts.apply(deposit(1, 4, "1.0")).unwrap_err(),
+            accounts.apply(&deposit(1, 4, "1.0")).unwrap_err(),
             Skip::Locked
         );
         assert_eq!(
-            accounts.apply(withdrawal(1, 5, "1.0")).unwrap_err(),
+            accounts.apply(&withdrawal(1, 5, "1.0")).unwrap_err(),
             Skip::Locked
         );
-        assert_eq!(accounts.apply(dispute(1, 2)).unwrap_err(), Skip::Locked);
-        assert_eq!(accounts.apply(resolve(1, 2)).unwrap_err(), Skip::Locked);
-        assert_eq!(accounts.apply(chargeback(1, 2)).unwrap_err(), Skip::Locked);
-        assert_eq!(accounts.apply(dispute(1, 99)).unwrap_err(), Skip::Locked);
-        assert_eq!(accounts.apply(dispute(1, 3)).unwrap_err(), Skip::Locked);
+        assert_eq!(accounts.apply(&dispute(1, 2)).unwrap_err(), Skip::Locked);
+        assert_eq!(accounts.apply(&resolve(1, 2)).unwrap_err(), Skip::Locked);
+        assert_eq!(accounts.apply(&chargeback(1, 2)).unwrap_err(), Skip::Locked);
+        assert_eq!(accounts.apply(&dispute(1, 99)).unwrap_err(), Skip::Locked);
+        assert_eq!(accounts.apply(&dispute(1, 3)).unwrap_err(), Skip::Locked);
         assert_eq!(*accounts.balance(1).unwrap(), before);
         assert!(accounts.transaction(4).is_none());
         assert!(matches!(
@@ -452,15 +508,15 @@ mod tests {
     #[test]
     fn charged_back_deposit_is_reported_when_the_account_is_not_locked() {
         let mut accounts = apply_all(vec![deposit(1, 1, "5.0")]);
-        accounts.apply(dispute(1, 1)).unwrap();
-        accounts.apply(chargeback(1, 1)).unwrap();
+        accounts.apply(&dispute(1, 1)).unwrap();
+        accounts.apply(&chargeback(1, 1)).unwrap();
         accounts.balances.get_mut(&1).unwrap().locked = false;
         assert_eq!(
-            accounts.apply(dispute(1, 1)).unwrap_err(),
+            accounts.apply(&dispute(1, 1)).unwrap_err(),
             Skip::ChargedBack
         );
         assert_eq!(
-            accounts.apply(resolve(1, 1)).unwrap_err(),
+            accounts.apply(&resolve(1, 1)).unwrap_err(),
             Skip::NotDisputed
         );
         assert!(!accounts.balance(1).unwrap().locked);
@@ -471,23 +527,23 @@ mod tests {
     fn zero_amount_changes_nothing_and_does_not_reserve_its_id() {
         let mut accounts = Accounts::new();
         assert_eq!(
-            accounts.apply(deposit(1, 1, "0")).unwrap_err(),
+            accounts.apply(&deposit(1, 1, "0")).unwrap_err(),
             Skip::ZeroAmount
         );
         assert!(accounts.balance(1).is_none());
         assert!(accounts.transaction(1).is_none());
 
-        accounts.apply(deposit(1, 1, "2.0")).unwrap();
+        accounts.apply(&deposit(1, 1, "2.0")).unwrap();
         assert_eq!(
-            accounts.apply(deposit(1, 2, "0")).unwrap_err(),
+            accounts.apply(&deposit(1, 2, "0")).unwrap_err(),
             Skip::ZeroAmount
         );
         assert_eq!(
-            accounts.apply(withdrawal(1, 2, "0")).unwrap_err(),
+            accounts.apply(&withdrawal(1, 2, "0")).unwrap_err(),
             Skip::ZeroAmount
         );
         assert!(accounts.transaction(2).is_none());
-        accounts.apply(deposit(1, 2, "3.0")).unwrap();
+        accounts.apply(&deposit(1, 2, "3.0")).unwrap();
         assert_available(&accounts, 1, "5.0000");
     }
 
@@ -495,11 +551,11 @@ mod tests {
     fn ignored_rows_do_not_create_a_client() {
         let mut accounts = Accounts::new();
         assert_eq!(
-            accounts.apply(withdrawal(3, 1, "1.0")).unwrap_err(),
+            accounts.apply(&withdrawal(3, 1, "1.0")).unwrap_err(),
             Skip::InsufficientFunds
         );
         assert_eq!(
-            accounts.apply(dispute(4, 99)).unwrap_err(),
+            accounts.apply(&dispute(4, 99)).unwrap_err(),
             Skip::UnknownTransaction
         );
         assert!(accounts.balance(3).is_none());
@@ -513,18 +569,18 @@ mod tests {
         accounts.balances.get_mut(&1).unwrap().available = SignedAmount::from_minor(i64::MAX);
         let before = *accounts.balance(1).unwrap();
         assert_eq!(
-            accounts.apply(deposit(1, 3, "0.0001")).unwrap_err(),
+            accounts.apply(&deposit(1, 3, "0.0001")).unwrap_err(),
             Skip::Overflow
         );
         assert_eq!(*accounts.balance(1).unwrap(), before);
         assert!(accounts.transaction(3).is_none());
 
         accounts.balances.get_mut(&1).unwrap().available = SignedAmount::from_minor(60_000);
-        accounts.apply(dispute(1, 1)).unwrap();
+        accounts.apply(&dispute(1, 1)).unwrap();
         accounts.balances.get_mut(&1).unwrap().held = SignedAmount::from_minor(0);
         let before = *accounts.balance(1).unwrap();
         assert_eq!(
-            accounts.apply(chargeback(1, 1)).unwrap_err(),
+            accounts.apply(&chargeback(1, 1)).unwrap_err(),
             Skip::NegativeHeld
         );
         assert_eq!(*accounts.balance(1).unwrap(), before);

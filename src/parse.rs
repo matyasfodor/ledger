@@ -42,7 +42,7 @@ pub fn parse_csv<R: io::Read>(reader: R) -> TransactionReader<R> {
         Err(err) => TransactionReader {
             headers: csv::StringRecord::new(),
             reader,
-            pending: Some(failure(1, broken(err))),
+            pending: Some(failure(1, broken(err), String::new())),
             stopped: true,
         },
     }
@@ -70,7 +70,7 @@ impl<R: io::Read> Iterator for TransactionReader<R> {
             }
             Err(err) => {
                 let line = self.reader.position().line();
-                Some(Err(failure(line, broken(err))))
+                Some(Err(failure(line, broken(err), String::new())))
             }
         }
     }
@@ -78,12 +78,20 @@ impl<R: io::Read> Iterator for TransactionReader<R> {
 
 impl<R: io::Read> TransactionReader<R> {
     fn parse_record(&self, line: u64, record: &csv::StringRecord) -> Result<ParsedRow, RowFailure> {
-        let parsed: Record = record
-            .deserialize(Some(&self.headers))
-            .map_err(|err| failure(line, broken(err)))?;
+        let parsed: Record = record.deserialize(Some(&self.headers)).map_err(|err| {
+            let row = record.iter().collect::<Vec<_>>().join(",");
+            failure(line, broken(err), format!("row={row}"))
+        })?;
+        let detail = format!(
+            "type={} client={} tx={} amount={}",
+            parsed.tx_type,
+            parsed.client,
+            parsed.tx,
+            parsed.amount.as_deref().unwrap_or("")
+        );
         interpret(parsed)
             .map(|transaction| ParsedRow { line, transaction })
-            .map_err(|skip| failure(line, skip))
+            .map_err(|skip| failure(line, skip, detail))
     }
 }
 
@@ -120,8 +128,12 @@ fn broken(err: impl ToString) -> Skip {
     }
 }
 
-fn failure(line: u64, skip: Skip) -> RowFailure {
-    RowFailure { line, skip }
+fn failure(line: u64, skip: Skip, detail: impl Into<String>) -> RowFailure {
+    RowFailure {
+        line,
+        skip,
+        detail: detail.into(),
+    }
 }
 
 #[cfg(test)]
@@ -180,7 +192,7 @@ deposit, 1, 7, 2.0
         let mut skipped = Vec::new();
         for row in parse_csv(csv.as_bytes()) {
             match row {
-                Ok(row) => accounts.apply(row.transaction).unwrap(),
+                Ok(row) => accounts.apply(&row.transaction).unwrap(),
                 Err(failure) => skipped.push(failure),
             }
         }
@@ -198,6 +210,14 @@ deposit, 1, 7, 2.0
         assert_eq!(skipped[4].skip, Skip::MissingAmount);
         assert_eq!(skipped[5].skip, Skip::InvalidClient);
         assert_eq!(skipped[6].skip, Skip::InvalidTx);
+        assert_eq!(
+            skipped[3].to_string(),
+            "line 5: unknown transaction type, type=bogus client=1 tx=4 amount=1.0"
+        );
+        assert_eq!(
+            skipped[5].to_string(),
+            "line 7: invalid client id, type=deposit client=65536 tx=6 amount=1.0"
+        );
         assert_eq!(
             format_amount(accounts.balance(1).unwrap().available),
             "2.0000"

@@ -28,6 +28,8 @@ pub enum Skip {
 pub struct RowFailure {
     pub line: u64,
     pub skip: Skip,
+    /// Raw type, client, tx, and amount when the row could be read.
+    pub detail: String,
 }
 
 impl fmt::Display for Skip {
@@ -57,7 +59,11 @@ impl fmt::Display for Skip {
 
 impl fmt::Display for RowFailure {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "line {}: {}", self.line, self.skip)
+        if self.detail.is_empty() {
+            write!(f, "line {}: {}", self.line, self.skip)
+        } else {
+            write!(f, "line {}: {}, {}", self.line, self.skip, self.detail)
+        }
     }
 }
 
