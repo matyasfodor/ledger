@@ -10,14 +10,15 @@ use std::{
 use ledger::amount::{Amount, format_amount};
 use ledger::balance::Balance;
 use ledger::deposit::{AccountTransaction, DepositState};
+use ledger::id::{ClientId, TxId};
 use ledger::parse::parse_csv;
 use ledger::transaction::Transaction;
 
 fn calculate_balances(path: &str) -> Result<(), Box<dyn Error>> {
     let mut out = io::stdout().lock();
     writeln!(out, "client, available, held, total, locked")?;
-    let mut balances: HashMap<u32, Balance> = HashMap::new();
-    let mut transactions_by_id: HashMap<u32, AccountTransaction> = HashMap::new();
+    let mut balances: HashMap<ClientId, Balance> = HashMap::new();
+    let mut transactions_by_id: HashMap<TxId, AccountTransaction> = HashMap::new();
     for record in parse_csv(fs::File::open(path)?) {
         let record = record?;
         let balance = balances.entry(record.client()).or_insert(Balance {

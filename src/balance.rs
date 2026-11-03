@@ -1,7 +1,7 @@
-use crate::amount::Amount;
+use crate::amount::{PositiveAmount, SignedAmount};
 
 pub struct Balance {
-    pub available: Amount<i64>,
-    pub held: Amount<u32>,
+    pub available: SignedAmount,
+    pub held: PositiveAmount,
     pub locked: bool,
 }

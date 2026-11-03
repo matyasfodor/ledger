@@ -1,4 +1,5 @@
-use crate::amount::Amount;
+use crate::amount::PositiveAmount;
+use crate::id::ClientId;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum DepositState {
@@ -12,8 +13,8 @@ pub enum DepositState {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum AccountTransaction {
     Deposit {
-        client: u32,
-        amount: Amount<u32>,
+        client: ClientId,
+        amount: PositiveAmount,
         state: DepositState,
     },
     Withdrawal,

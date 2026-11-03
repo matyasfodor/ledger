@@ -1,33 +1,34 @@
-use crate::amount::Amount;
+use crate::amount::PositiveAmount;
+use crate::id::{ClientId, TxId};
 
 #[derive(Debug)]
 pub enum Transaction {
     Deposit {
-        client: u32,
-        tx: u32,
-        amount: Amount<u32>,
+        client: ClientId,
+        tx: TxId,
+        amount: PositiveAmount,
     },
     Withdrawal {
-        client: u32,
-        tx: u32,
-        amount: Amount<u32>,
+        client: ClientId,
+        tx: TxId,
+        amount: PositiveAmount,
     },
     Chargeback {
-        client: u32,
-        tx: u32,
+        client: ClientId,
+        tx: TxId,
     },
     Dispute {
-        client: u32,
-        tx: u32,
+        client: ClientId,
+        tx: TxId,
     },
     Resolve {
-        client: u32,
-        tx: u32,
+        client: ClientId,
+        tx: TxId,
     },
 }
 
 impl Transaction {
-    pub fn client(&self) -> u32 {
+    pub fn client(&self) -> ClientId {
         match self {
             Transaction::Deposit { client, .. } => *client,
             Transaction::Withdrawal { client, .. } => *client,

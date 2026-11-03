@@ -6,9 +6,6 @@ use serde::Deserialize;
 use serde::de::{self, Deserializer, Visitor};
 
 /// Minor units of `1/10_000`. `1.5000` is stored as `15_000`.
-///
-/// Transaction amounts use [`Amount<u32>`] (up to `429_496.7295`). Account
-/// `available` uses [`Amount<i64>`], because a dispute can push it below zero.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Amount<T> {
     minor: T,
@@ -19,6 +16,12 @@ impl<T> Amount<T> {
         Self { minor }
     }
 }
+
+/// A transaction amount or held funds. Non-negative, up to `429_496.7295`.
+pub type PositiveAmount = Amount<u32>;
+
+/// Available funds. Signed because a dispute can push the balance below zero.
+pub type SignedAmount = Amount<i64>;
 
 const SCALE: u32 = 10_000;
 
@@ -35,7 +38,7 @@ impl fmt::Display for ParseAmountError {
 
 impl std::error::Error for ParseAmountError {}
 
-pub fn parse_amount(input: &str) -> Result<Amount<u32>, ParseAmountError> {
+pub fn parse_amount(input: &str) -> Result<PositiveAmount, ParseAmountError> {
     let invalid = || ParseAmountError {
         input: input.to_owned(),
     };
@@ -65,13 +68,13 @@ pub trait Formattable {
     fn write_amount(self) -> String;
 }
 
-impl Formattable for Amount<u32> {
+impl Formattable for PositiveAmount {
     fn write_amount(self) -> String {
         write_parts(false, u64::from(self.minor / SCALE), self.minor % SCALE)
     }
 }
 
-impl Formattable for Amount<i64> {
+impl Formattable for SignedAmount {
     fn write_amount(self) -> String {
         let negative = self.minor < 0;
         let abs = self.minor.unsigned_abs();
@@ -90,15 +93,15 @@ pub fn format_amount(amount: impl Formattable) -> String {
     amount.write_amount()
 }
 
-impl From<Amount<u32>> for Amount<i64> {
-    fn from(amount: Amount<u32>) -> Self {
+impl From<PositiveAmount> for SignedAmount {
+    fn from(amount: PositiveAmount) -> Self {
         Self {
             minor: i64::from(amount.minor),
         }
     }
 }
 
-impl Add for Amount<u32> {
+impl Add for PositiveAmount {
     type Output = Self;
 
     fn add(self, rhs: Self) -> Self {
@@ -108,13 +111,13 @@ impl Add for Amount<u32> {
     }
 }
 
-impl AddAssign for Amount<u32> {
+impl AddAssign for PositiveAmount {
     fn add_assign(&mut self, rhs: Self) {
         *self = *self + rhs;
     }
 }
 
-impl Sub for Amount<u32> {
+impl Sub for PositiveAmount {
     type Output = Self;
 
     fn sub(self, rhs: Self) -> Self {
@@ -124,64 +127,66 @@ impl Sub for Amount<u32> {
     }
 }
 
-impl SubAssign for Amount<u32> {
+impl SubAssign for PositiveAmount {
     fn sub_assign(&mut self, rhs: Self) {
         *self = *self - rhs;
     }
 }
 
-impl Add<Amount<u32>> for Amount<i64> {
+impl Add<PositiveAmount> for SignedAmount {
     type Output = Self;
 
-    fn add(self, rhs: Amount<u32>) -> Self {
+    fn add(self, rhs: PositiveAmount) -> Self {
         Self {
             minor: self.minor + i64::from(rhs.minor),
         }
     }
 }
 
-impl AddAssign<Amount<u32>> for Amount<i64> {
-    fn add_assign(&mut self, rhs: Amount<u32>) {
+impl AddAssign<PositiveAmount> for SignedAmount {
+    fn add_assign(&mut self, rhs: PositiveAmount) {
         *self = *self + rhs;
     }
 }
 
-impl Sub<Amount<u32>> for Amount<i64> {
+impl Sub<PositiveAmount> for SignedAmount {
     type Output = Self;
 
-    fn sub(self, rhs: Amount<u32>) -> Self {
+    fn sub(self, rhs: PositiveAmount) -> Self {
         Self {
             minor: self.minor - i64::from(rhs.minor),
         }
     }
 }
 
-impl SubAssign<Amount<u32>> for Amount<i64> {
-    fn sub_assign(&mut self, rhs: Amount<u32>) {
+impl SubAssign<PositiveAmount> for SignedAmount {
+    fn sub_assign(&mut self, rhs: PositiveAmount) {
         *self = *self - rhs;
     }
 }
 
-impl PartialEq<Amount<u32>> for Amount<i64> {
-    fn eq(&self, other: &Amount<u32>) -> bool {
+impl PartialEq<PositiveAmount> for SignedAmount {
+    fn eq(&self, other: &PositiveAmount) -> bool {
         self.minor == i64::from(other.minor)
     }
 }
 
-impl PartialOrd<Amount<u32>> for Amount<i64> {
-    fn partial_cmp(&self, other: &Amount<u32>) -> Option<Ordering> {
+impl PartialOrd<PositiveAmount> for SignedAmount {
+    fn partial_cmp(&self, other: &PositiveAmount) -> Option<Ordering> {
         Some(self.minor.cmp(&i64::from(other.minor)))
     }
 }
 
-pub fn deserialize_optional_amount<'de, D>(deserializer: D) -> Result<Option<Amount<u32>>, D::Error>
+pub fn deserialize_optional_amount<'de, D>(
+    deserializer: D,
+) -> Result<Option<PositiveAmount>, D::Error>
 where
     D: Deserializer<'de>,
 {
     struct OptionalAmount;
 
     impl<'de> Visitor<'de> for OptionalAmount {
-        type Value = Option<Amount<u32>>;
+        type Value = Option<PositiveAmount>;
 
         fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
             formatter.write_str("an optional amount with up to 4 decimal places")
@@ -208,11 +213,11 @@ mod tests {
     use super::*;
     use serde::Deserialize;
 
-    fn unsigned(minor: u32) -> Amount<u32> {
+    fn unsigned(minor: u32) -> PositiveAmount {
         Amount::from_minor(minor)
     }
 
-    fn signed(minor: i64) -> Amount<i64> {
+    fn signed(minor: i64) -> SignedAmount {
         Amount::from_minor(minor)
     }
 
@@ -262,7 +267,7 @@ mod tests {
     #[derive(Debug, Deserialize, PartialEq)]
     struct Row {
         #[serde(deserialize_with = "deserialize_optional_amount")]
-        amount: Option<Amount<u32>>,
+        amount: Option<PositiveAmount>,
     }
 
     #[test]

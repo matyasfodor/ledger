@@ -2,7 +2,8 @@ use std::{error::Error, io};
 
 use serde::Deserialize;
 
-use crate::amount::{Amount, deserialize_optional_amount};
+use crate::amount::{PositiveAmount, deserialize_optional_amount};
+use crate::id::{ClientId, TxId};
 use crate::transaction::Transaction;
 
 #[derive(Debug, Deserialize)]
@@ -24,10 +25,10 @@ enum TxType {
 struct Record {
     #[serde(rename = "type")]
     tx_type: TxType,
-    client: u32,
-    tx: u32,
+    client: ClientId,
+    tx: TxId,
     #[serde(deserialize_with = "deserialize_optional_amount")]
-    amount: Option<Amount<u32>>,
+    amount: Option<PositiveAmount>,
 }
 
 impl TryFrom<Record> for Transaction {
