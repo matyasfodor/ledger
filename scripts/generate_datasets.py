@@ -25,9 +25,9 @@ Reference rules
 ---------------
 - Transaction ids are unique for accepted deposits and withdrawals. A repeated id
   is ignored. Dispute, resolve, and chargeback rows reuse the referenced id.
-- A well-formed transaction opens the client before it is accepted or ignored.
-  A rejected withdrawal, dispute, resolve, chargeback, or duplicate still leaves
-  an account row. Ignored rows do not move funds.
+- A client row is created only when a deposit is accepted. A rejected withdrawal,
+  dispute, resolve, chargeback, or duplicate does not open an account. Ignored
+  rows do not move funds.
 - A withdrawal larger than available funds is ignored. Withdrawing the exact
   available balance is valid.
 - Only an accepted deposit can be disputed, and only by the same client. The
@@ -128,7 +128,6 @@ class Engine:
     txs: dict[int, StoredTx] = field(default_factory=dict)
 
     def apply(self, row: Row) -> str:
-        self.accounts.setdefault(row.client, Account())
         if row.kind == "deposit":
             return self._deposit(row)
         if row.kind == "withdrawal":

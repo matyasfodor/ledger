@@ -1,6 +1,6 @@
 use std::{env, fs, io, process};
 
-use ledger::accounts::process;
+use ledger::process;
 
 fn main() {
     env_logger::init();
